@@ -465,10 +465,10 @@ async def delete_category(
 
 @router.get("/categories")
 async def admin_list_categories(
-    admin: User = Depends(get_admin_user),
+    staff: User = Depends(get_staff_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """管理员获取所有分类."""
+    """获取所有分类（管理员/厨师）. """
     result = await db.execute(select(Category).order_by(Category.sort_order))
     cats = result.scalars().all()
     return success(data=[CategoryOut.model_validate(c) for c in cats])
@@ -521,10 +521,10 @@ async def update_material(
 
 @router.get("/materials")
 async def admin_list_materials(
-    admin: User = Depends(get_admin_user),
+    staff: User = Depends(get_staff_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """管理员获取所有材料."""
+    """获取所有材料（管理员/厨师）. """
     result = await db.execute(select(Material).order_by(Material.category, Material.name))
     mats = result.scalars().all()
     return success(data=[MaterialOut.model_validate(m) for m in mats])
