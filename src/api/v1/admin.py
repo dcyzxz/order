@@ -781,3 +781,19 @@ async def review_pending_dish(
         data=PendingDishOut.model_validate(pending),
         message=f"菜品已{'审核通过' if review.status == 'approved' else '驳回'}",
     )
+
+
+@router.delete("/pending-dishes/{pending_id}")
+async def delete_pending_dish(
+    pending_id: int,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """管理员删除待定价菜品."""
+    result = await db.execute(select(PendingDish).where(PendingDish.id == pending_id))
+    pending = result.scalar_one_or_none()
+    if pending is None:
+        raise NotFoundError(message="待定价菜品不存在")
+    await db.delete(pending)
+    await db.flush()
+    return success(message="已删除")

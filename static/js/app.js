@@ -309,19 +309,13 @@ async function loadCategories() {
 function renderSidebar() {
   const bar = document.getElementById('menu-sidebar');
   if (!bar) return;
-  bar.innerHTML = `
-    <div onclick="switchCategory(null)"
-      style="padding:14px 8px;text-align:center;font-size:13px;cursor:pointer;
-        ${activeCategory === null ? 'background:#fff;color:var(--green);font-weight:600;border-left:3px solid var(--green)' : 'color:#666;border-left:3px solid transparent'}">
-      全部
-    </div>
-  ` + allCategories.map(c => `
-    <div onclick="switchCategory(${c.id})"
-      style="padding:14px 8px;text-align:center;font-size:13px;cursor:pointer;
-        ${activeCategory === c.id ? 'background:#fff;color:var(--green);font-weight:600;border-left:3px solid var(--green)' : 'color:#666;border-left:3px solid transparent'}">
-      ${c.name}
-    </div>
-  `).join('');
+  bar.innerHTML = '<div onclick="switchCategory(null)" style="padding:14px 8px;text-align:center;font-size:13px;cursor:pointer;' +
+    (activeCategory === null ? 'background:#fff;color:var(--green);font-weight:600;border-left:3px solid var(--green)' : 'color:#666;border-left:3px solid transparent') +
+    '">全部</div>' +
+    allCategories.map(c => '<div onclick="switchCategory(' + c.id + ')" style="padding:14px 8px;text-align:center;font-size:13px;cursor:pointer;' +
+      (activeCategory === c.id ? 'background:#fff;color:var(--green);font-weight:600;border-left:3px solid var(--green)' : 'color:#666;border-left:3px solid transparent') +
+      '">' + c.name + '</div>'
+    ).join('');
 }
 
 function switchCategory(id) {
@@ -1101,6 +1095,15 @@ async function rejectPending(id) {
   } catch (e) { toast('操作失败'); }
 }
 
+async function adminDeletePending(id) {
+  if (!confirm('确定要删除此记录吗？')) return;
+  try {
+    await api('/admin/pending-dishes/' + id, { method: 'DELETE' });
+    toast('已删除');
+    loadAdminPending();
+  } catch (e) { toast('删除失败'); }
+}
+
 // Admin Materials
 let adminMaterials = [];
 let adminMatSearch = '';
@@ -1230,7 +1233,7 @@ async function loadAdminCategories() {
         <button class="btn btn-small btn-outline" style="color:var(--red);border-color:var(--red);font-size:12px;padding:2px 10px" onclick="adminDeleteCategory(${c.id})">删除</button>
       </div>
     `).join('');
-  } catch (e) { console.error(e); }
+} catch (e) { console.error(e); }
 }
 
 async function adminAddCategory() {
