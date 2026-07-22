@@ -522,7 +522,20 @@ async def chef_list_orders(
     query = query.order_by(Order.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(query)
     orders = result.scalars().all()
-    return paginated(items=[OrderOut.model_validate(o) for o in orders], total=total, page=page, page_size=page_size)
+    # Populate excluded material names
+    mat_result = await db.execute(select(Material))
+    mat_map = {m.id: m.name for m in mat_result.scalars().all()}
+    items = []
+    for o in orders:
+        order_dict = OrderOut.model_validate(o).model_dump(mode="python")
+        for item in order_dict.get("items", []):
+            if item.get("excluded_material_ids"):
+                item["excluded_material_names"] = [mat_map.get(i, f"ID:{i}") for i in item["excluded_material_ids"]]
+            else:
+                item["excluded_material_names"] = []
+        items.append(order_dict)
+    return paginated(items=items, total=total, page=page, page_size=page_size)
+
 
 @router.get("/orders")
 async def admin_list_orders(
@@ -545,7 +558,18 @@ async def admin_list_orders(
     query = query.order_by(Order.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(query)
     orders = result.scalars().all()
-    return paginated(items=[OrderOut.model_validate(o) for o in orders], total=total, page=page, page_size=page_size)
+    mat_result = await db.execute(select(Material))
+    mat_map = {m.id: m.name for m in mat_result.scalars().all()}
+    items = []
+    for o in orders:
+        order_dict = OrderOut.model_validate(o).model_dump(mode="python")
+        for item in order_dict.get("items", []):
+            if item.get("excluded_material_ids"):
+                item["excluded_material_names"] = [mat_map.get(i, f"ID:{i}") for i in item["excluded_material_ids"]]
+            else:
+                item["excluded_material_names"] = []
+        items.append(order_dict)
+    return paginated(items=items, total=total, page=page, page_size=page_size)
 
 
 @router.put("/orders/{order_id}/status")

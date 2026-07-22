@@ -278,7 +278,7 @@ function renderDishList() {
   list.innerHTML = '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">共 ' + filtered.length + ' 道菜</div>' +
     filtered.map(d => `
     <div class="dish-card" onclick="showDishDetail(${d.id})" style="margin-bottom:10px">
-      <div class="dish-img" style="width:72px;height:72px;font-size:28px">🍽️</div>
+      <div class="dish-img" style="width:72px;height:72px;font-size:28px;overflow:hidden">${d.image_url ? '<img src="' + d.image_url + '" style="width:100%;height:100%;object-fit:cover">' : '🍽️'}</div>
       <div class="dish-info">
         <div class="dish-name" style="font-size:14px">${d.name}</div>
         <div class="dish-footer" style="margin-top:8px">
@@ -308,7 +308,7 @@ async function showDishDetail(id) {
     const d = currentDish;
     document.getElementById('detail-content').innerHTML = `
       <div class="detail-header">
-        <div class="dish-img-lg">🍽️</div>
+        <div class="dish-img-lg">${d.image_url ? '<img src="' + d.image_url + '" style="width:200px;height:160px;object-fit:cover;border-radius:12px">' : '🍽️'}</div>
         <div class="dish-name">${d.name}</div>
         <div class="dish-price-lg">${d.price !== null ? '¥' + d.price : '待定价'}</div>
         <div class="dish-desc">${d.description || ''}</div>
@@ -627,15 +627,17 @@ function renderAdminDishes() {
   el.innerHTML = (filtered.length === 0 ? '<div class="text-secondary text-center" style="padding:40px">' + (adminDishSearch ? '无匹配菜品' : '暂无菜品') + '</div>'
   : filtered.map(d => `
     <div class="card" style="padding:12px">
-      <div class="flex-between">
-        <div>
-          <strong>${d.name}</strong>
-          <span class="text-secondary" style="margin-left:6px;font-size:12px">${dishStatusText(d.status)}</span>
-        </div>
-        <span style="color:var(--red);font-weight:600">${d.price !== null ? '¥' + d.price : '待定价'}</span>
-      </div>
-      <div class="flex-between mt-8">
-        <span class="text-secondary" style="font-size:13px">${d.category_name || ''}</span>
+      <div style="display:flex;gap:12px">
+        <div style="width:60px;height:60px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:24px">${d.image_url ? '<img src="' + d.image_url + '" style="width:100%;height:100%;object-fit:cover">' : '🍽️'}</div>
+        <div style="flex:1;min-width:0">
+          <div class="flex-between">
+            <div>
+              <strong>${d.name}</strong>
+              <span class="text-secondary" style="margin-left:6px;font-size:12px">${dishStatusText(d.status)}</span>
+            </div>
+            <span style="color:var(--red);font-weight:600;flex-shrink:0">${d.price !== null ? '¥' + d.price : '待定价'}</span>
+          </div>
+          <div class="text-secondary" style="font-size:13px;margin-top:4px">${d.category_name || '未分类'}</div>
         <div style="display:flex;gap:6px">
           <button class="btn btn-small btn-outline" onclick="showAdminDishModal(${d.id})" style="font-size:12px">编辑</button>
           <button class="btn btn-small ${d.status === 'active' ? 'btn-danger' : 'btn-primary'}" onclick="toggleDishStatus(${d.id}, '${d.status}')" style="font-size:12px">
@@ -877,9 +879,10 @@ function renderAdminOrders() {
         <span class="text-secondary" style="font-size:13px">${o.order_no}</span>
         <span style="font-size:13px;font-weight:500;color:var(--${o.status === 'pending' ? 'orange' : o.status === 'completed' ? 'green' : 'blue'})">${orderStatusText(o.status)}</span>
       </div>
+      ${o.items && o.items.length ? '<div style="font-size:12px;color:var(--text-secondary);margin-top:6px">' + o.items.map(i => i.dish_name + (i.excluded_material_names && i.excluded_material_names.length ? ' (忌口:' + i.excluded_material_names.join(',') + ')' : '') + ' ×' + i.quantity).join('<br>') + '</div>' : ''}
       <div class="flex-between mt-8" style="font-size:13px">
         <span>¥${o.total_price}</span>
-        <span class="text-secondary">${o.item_count || 0}道菜</span>
+        <span class="text-secondary">${o.item_count || (o.items ? o.items.length : 0)}道菜</span>
       </div>
       <div class="mt-8" style="display:flex;gap:6px;flex-wrap:wrap">
         ${o.status === 'pending' ? `<button class="btn btn-small btn-primary" onclick="adminUpdateOrder(${o.id},'confirmed')">确认</button><button class="btn btn-small btn-outline" onclick="adminUpdateOrder(${o.id},'cancelled')">取消</button>` : ''}

@@ -35,6 +35,7 @@ class OrderItemOut(BaseModel):
     quantity: int
     unit_price: Decimal
     excluded_material_ids: list[int] = []
+    excluded_material_names: list[str] = []
 
     model_config = {"from_attributes": True}
 
