@@ -1,23 +1,29 @@
 from __future__ import annotations
 
+import hashlib
+import secrets
 from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from src.core.config import settings
 
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_password(password: str) -> str:
-    """Hash a plain-text password."""
-    return _pwd_context.hash(password)
+    """Hash a plain-text password using PBKDF2-SHA256 with a random salt."""
+    salt = secrets.token_hex(16)
+    pwd_hash = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100_000)
+    return f"{salt}${pwd_hash.hex()}"
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain-text password against its hash."""
-    return _pwd_context.verify(plain_password, hashed_password)
+    try:
+        salt, pwd_hash = hashed_password.split("$")
+        computed = hashlib.pbkdf2_hmac("sha256", plain_password.encode(), salt.encode(), 100_000)
+        return computed.hex() == pwd_hash
+    except (ValueError, AttributeError):
+        return False
 
 
 def create_access_token(

@@ -22,7 +22,12 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git remote *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(npm list *)",
+      "Bash(npx railway *)",
+      "Bash(npx *)",
+      "Bash(curl *)",
+      "Bash(pip show *)"
     ]
   }
 }

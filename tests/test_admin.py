@@ -5,18 +5,20 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.user import User
-from src.core.security import create_access_token
+from src.core.security import create_access_token, hash_password
 
 
 @pytest.fixture
 async def admin_user(db_session: AsyncSession) -> User:
     """Create an admin user."""
-    user = User(openid="admin_openid", nickname="管理员", is_admin=True)
+    user = User(
+        openid="admin_openid",
+        username="admin",
+        password_hash=hash_password("admin123"),
+        nickname="管理员",
+        role="admin",
+    )
     db_session.add(user)
-    await db_session.flush()
-
-    # Update the user to set is_admin properly
-    user.is_admin = True
     await db_session.flush()
     return user
 

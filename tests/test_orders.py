@@ -10,6 +10,7 @@ from src.models.category import Category
 from src.models.dish import Dish
 from src.models.material import Material, DishMaterial
 from src.models.user import User
+from src.core.security import hash_password
 
 
 @pytest.fixture
@@ -33,8 +34,14 @@ async def seed_data(db_session: AsyncSession) -> dict:
         DishMaterial(dish_id=dish.id, material_id=salt.id),
     ])
 
-    # Create a test user
-    user = User(openid="test_openid_for_orders", nickname="测试用户")
+    # Create a test user with password auth
+    user = User(
+        openid="test_openid_for_orders",
+        username="testuser",
+        password_hash=hash_password("test1234"),
+        nickname="测试用户",
+        role="user",
+    )
     db_session.add(user)
     await db_session.flush()
 
@@ -46,7 +53,7 @@ async def auth_token(client: AsyncClient, db_session: AsyncSession, seed_data: d
     """Get auth token for the test user."""
     response = await client.post(
         "/api/v1/users/login",
-        json={"code": "test_code_orders"},
+        json={"username": "testuser", "password": "test1234"},
     )
     data = response.json()
     return data["data"]["access_token"]

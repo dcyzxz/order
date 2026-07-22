@@ -22,7 +22,7 @@ async function api(path, options = {}) {
 }
 
 const userApi = {
-  login: (code, nickName, avatarUrl) => api('/users/login', { method: 'POST', data: { code, nick_name: nickName, avatar_url: avatarUrl } }),
+  login: (username, password) => api('/users/login', { method: 'POST', data: { username, password } }),
   getProfile: () => api('/users/me'),
   updateProfile: (data) => api('/users/me', { method: 'PUT', data }),
 };
@@ -57,6 +57,10 @@ const adminApi = {
   updateOrderStatus: (id, status) => api('/admin/orders/' + id + '/status?new_status=' + status, { method: 'PUT' }),
   getPendingDishes: (params) => api('/admin/pending-dishes?' + new URLSearchParams(params)),
   reviewPendingDish: (id, data) => api('/admin/pending-dishes/' + id + '/review', { method: 'POST', data }),
+  // User management
+  createUser: (data) => api('/admin/users', { method: 'POST', data }),
+  getUsers: (params) => api('/admin/users?' + new URLSearchParams(params)),
+  updateUser: (id, data) => api('/admin/users/' + id, { method: 'PUT', data }),
 };
 
 /* ========== Helpers ========== */
@@ -138,25 +142,49 @@ async function checkLogin() {
 }
 
 async function doLogin() {
-  const code = 'web_' + Date.now();
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errorEl = document.getElementById('login-error');
+  errorEl.style.display = 'none';
+
+  if (!username || !password) {
+    errorEl.textContent = '请输入用户名和密码';
+    errorEl.style.display = '';
+    return;
+  }
   try {
-    const res = await userApi.login(code, '用户' + String(Math.random()).slice(2, 6));
+    const res = await userApi.login(username, password);
     localStorage.setItem('token', res.data.access_token);
     localStorage.setItem('user', JSON.stringify(res.data.user));
     updateUserUI();
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
     initApp();
+    initProfile();
     toast('登录成功');
+    showPage('menu-page');
   } catch (e) {
-    toast('登录失败: ' + e.message);
+    errorEl.textContent = e.message || '登录失败';
+    errorEl.style.display = '';
   }
 }
 
 function updateUserUI() {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
-  const nameEl = document.getElementById('user-name-display');
-  if (nameEl) nameEl.textContent = user ? user.nickname || '用户' : '未登录';
+  const loggedIn = !!user;
+  document.getElementById('profile-login-form').style.display = loggedIn ? 'none' : '';
+  document.getElementById('profile-logged-in').style.display = loggedIn ? '' : 'none';
+
+  if (loggedIn) {
+    const nameEl = document.getElementById('user-name-display');
+    if (nameEl) nameEl.textContent = user.nickname || user.username || '用户';
+    const roleEl = document.getElementById('user-role-display');
+    const roleMap = { admin: '管理员', chef: '厨师', user: '点餐用户' };
+    if (roleEl) roleEl.textContent = roleMap[user.role] || user.role;
+  }
+
   const adminEntry = document.getElementById('admin-entry-btn');
-  if (adminEntry) adminEntry.style.display = user && user.is_admin ? '' : 'none';
+  if (adminEntry) adminEntry.style.display = user && user.role === 'admin' ? '' : 'none';
 }
 
 function logout() {
@@ -738,6 +766,57 @@ async function loadAdminMaterials() {
   } catch (e) { console.error(e); }
 }
 
+// Admin Users
+async function loadAdminUsers() {
+  try {
+    const res = await adminApi.getUsers({ page_size: 100 });
+    const users = res.data.items || [];
+    const el = document.getElementById('admin-user-list');
+    if (!el) return;
+    el.innerHTML = users.map(u => `
+      <div class="card">
+        <div class="flex-between">
+          <div>
+            <strong>${u.nickname || u.username}</strong>
+            <span style="font-size:12px;margin-left:8px;color:var(--text-secondary)">@${u.username}</span>
+          </div>
+          <span style="font-size:12px;padding:2px 8px;border-radius:4px;background:${u.role === 'admin' ? '#fef0f0' : u.role === 'chef' ? '#fdf6ec' : '#f0f9eb'};color:${u.role === 'admin' ? '#f56c6c' : u.role === 'chef' ? '#e6a23c' : '#67c23a'}">
+            ${u.role === 'admin' ? '管理员' : u.role === 'chef' ? '厨师' : '点餐用户'}
+          </span>
+        </div>
+        <div class="text-secondary mt-8">${u.is_active ? '正常' : '已禁用'}</div>
+      </div>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+function showAddUserModal() {
+  document.getElementById('user-modal-title').textContent = '新增用户';
+  document.getElementById('f-user-username').value = '';
+  document.getElementById('f-user-password').value = '';
+  document.getElementById('f-user-nickname').value = '';
+  document.getElementById('f-user-role').value = 'user';
+  window._editUserId = null;
+  document.getElementById('user-modal').classList.remove('hidden');
+}
+
+async function saveUser() {
+  const username = document.getElementById('f-user-username').value.trim();
+  const password = document.getElementById('f-user-password').value;
+  if (!username || !password) { toast('请填写用户名和密码'); return; }
+  try {
+    await adminApi.createUser({
+      username,
+      password,
+      nickname: document.getElementById('f-user-nickname').value.trim() || null,
+      role: document.getElementById('f-user-role').value,
+    });
+    document.getElementById('user-modal').classList.add('hidden');
+    toast('用户创建成功');
+    loadAdminUsers();
+  } catch (e) { toast('创建失败: ' + e.message); }
+}
+
 // Navigation for admin tabs
 function switchAdminTab(tab) {
   document.querySelectorAll('.admin-tab').forEach(t => t.style.display = 'none');
@@ -748,6 +827,7 @@ function switchAdminTab(tab) {
   if (tab === 'dishes') loadAdminDishes();
   if (tab === 'orders') loadAdminOrders();
   if (tab === 'pending') loadAdminPending();
+  if (tab === 'users') loadAdminUsers();
   if (tab === 'materials') loadAdminMaterials();
 }
 

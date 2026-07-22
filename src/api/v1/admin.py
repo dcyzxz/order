@@ -12,6 +12,7 @@ from src.api.deps import get_admin_user, get_current_user
 from src.api.response import success, paginated
 from src.core.database import get_db
 from src.core.exceptions import BusinessError, NotFoundError
+from src.core.security import hash_password
 from src.models.category import Category
 from src.models.dish import Dish
 from src.models.material import Material, DishMaterial
@@ -23,8 +24,83 @@ from src.schemas.dish import DishCreate, DishUpdate, DishOut
 from src.schemas.material import MaterialCreate, MaterialUpdate, MaterialOut
 from src.schemas.order import OrderOut
 from src.schemas.pending_dish import PendingDishCreate, PendingDishOut, PendingDishReview
+from src.schemas.user import UserCreate as UserCreateSchema, UserUpdate as UserUpdateSchema, UserOut
 
 router = APIRouter()
+
+
+# ==================== 用户管理 ====================
+
+@router.post("/users")
+async def create_user(
+    user_in: UserCreateSchema,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """管理员创建用户."""
+    # 检查用户名是否已存在
+    result = await db.execute(select(User).where(User.username == user_in.username))
+    if result.scalar_one_or_none():
+        raise BusinessError(message="用户名已存在")
+
+    user = User(
+        username=user_in.username,
+        password_hash=hash_password(user_in.password),
+        nickname=user_in.nickname,
+        role=user_in.role,
+    )
+    db.add(user)
+    await db.flush()
+    return success(data=UserOut.model_validate(user), message="用户创建成功")
+
+
+@router.get("/users")
+async def list_users(
+    role: str | None = Query(None, pattern=r"^(admin|chef|user)$"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """管理员查看用户列表."""
+    query = select(User)
+    if role:
+        query = query.where(User.role == role)
+
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar() or 0
+
+    query = query.order_by(User.id.desc()).offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    users = result.scalars().all()
+
+    return paginated(items=[UserOut.model_validate(u) for u in users], total=total, page=page, page_size=page_size)
+
+
+@router.put("/users/{user_id}")
+async def update_user(
+    user_id: int,
+    user_in: UserUpdateSchema,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """管理员更新用户信息."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise NotFoundError(message="用户不存在")
+
+    if user_in.nickname is not None:
+        user.nickname = user_in.nickname
+    if user_in.role is not None:
+        user.role = user_in.role
+    if user_in.is_active is not None:
+        user.is_active = user_in.is_active
+    if user_in.password is not None:
+        user.password_hash = hash_password(user_in.password)
+
+    await db.flush()
+    return success(data=UserOut.model_validate(user), message="用户更新成功")
 
 
 # ==================== 菜品管理 ====================

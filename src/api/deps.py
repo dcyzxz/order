@@ -38,6 +38,6 @@ async def get_admin_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
     """Get the current admin user."""
-    if not current_user.is_admin:
+    if current_user.role != "admin":
         raise AuthError(message="Admin access required", code=403)
     return current_user

@@ -10,12 +10,18 @@ class WechatLogin(BaseModel):
     avatar_url: str | None = Field(None, max_length=512, description="头像URL")
 
 
+class PasswordLogin(BaseModel):
+    """用户名密码登录."""
+    username: str = Field(..., min_length=2, max_length=64, description="用户名")
+    password: str = Field(..., min_length=4, max_length=128, description="密码")
+
+
 class UserCreate(BaseModel):
-    """创建用户."""
-    openid: str = Field(..., min_length=1, max_length=128)
-    nickname: str | None = Field(None, max_length=64)
-    avatar_url: str | None = Field(None, max_length=512)
-    phone: str | None = Field(None, max_length=20)
+    """管理员创建用户."""
+    username: str = Field(..., min_length=2, max_length=64, description="用户名")
+    password: str = Field(..., min_length=4, max_length=128, description="密码")
+    nickname: str | None = Field(None, max_length=64, description="昵称")
+    role: str = Field(default="user", pattern=r"^(admin|chef|user)$", description="角色")
 
 
 class UserUpdate(BaseModel):
@@ -23,16 +29,20 @@ class UserUpdate(BaseModel):
     nickname: str | None = Field(None, max_length=64)
     avatar_url: str | None = Field(None, max_length=512)
     phone: str | None = Field(None, max_length=20)
+    role: str | None = Field(None, pattern=r"^(admin|chef|user)$")
+    is_active: bool | None = None
+    password: str | None = Field(None, min_length=4, max_length=128, description="新密码")
 
 
 class UserOut(BaseModel):
     """用户信息输出."""
     id: int
-    openid: str
+    username: str | None = None
     nickname: str | None = None
     avatar_url: str | None = None
     phone: str | None = None
-    is_admin: bool = False
+    role: str = "user"
+    is_active: bool = True
 
     model_config = {"from_attributes": True}
 
