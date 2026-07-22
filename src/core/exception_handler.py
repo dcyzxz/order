@@ -34,5 +34,5 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
         return JSONResponse(
             status_code=500,
-            content={"code": 500, "message": "Internal server error", "data": None},
+            content={"code": 500, "message": f"Internal server error: {str(exc)}", "data": None},
         )
