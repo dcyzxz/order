@@ -242,8 +242,11 @@
         <input class="form-input" id="f-profile-name" placeholder="你的昵称">
       </div>
       <div class="form-group">
-        <label>头像URL</label>
-        <input class="form-input" id="f-profile-avatar" placeholder="头像图片链接">
+        <label>头像</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="form-input" id="f-profile-avatar" placeholder="头像URL或上传" style="flex:1">
+          <button class="btn btn-small btn-primary" onclick="uploadAvatar()" style="flex-shrink:0">上传</button>
+        </div>
       </div>
       <div class="form-group">
         <label>个人简介</label>

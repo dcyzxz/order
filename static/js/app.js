@@ -183,6 +183,30 @@ async function doLogin() {
   }
 }
 
+async function uploadAvatar() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/jpeg,image/png,image/gif,image/webp';
+  input.onchange = async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast('图片不能超过 5MB'); return; }
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(window.location.origin + '/api/v1/admin/upload', {
+        method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok || data.code >= 400) { toast(data.message || '上传失败'); return; }
+      document.getElementById('f-profile-avatar').value = data.data.url;
+      toast('头像已上传');
+    } catch(e) { toast('上传失败'); }
+  };
+  input.click();
+}
+
 function showProfileEdit() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   document.getElementById('f-profile-name').value = user.nickname || '';
