@@ -400,10 +400,10 @@ async def admin_list_orders(
 async def update_order_status(
     order_id: int,
     new_status: str = Query(..., pattern=r"^(confirmed|preparing|completed|cancelled)$"),
-    admin: User = Depends(get_admin_user),
+    staff: User = Depends(get_staff_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """管理员更新订单状态."""
+    """更新订单状态（管理员/厨师）. """
     result = await db.execute(select(Order).where(Order.id == order_id))
     order = result.scalar_one_or_none()
     if order is None:
