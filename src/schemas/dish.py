@@ -52,20 +52,6 @@ class DishOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
-    @model_validator(mode="before")
-    @classmethod
-    def populate_categories(cls, data):
-        if isinstance(data, dict):
-            return data
-        # 从 ORM 对象中提取多分类信息
-        if hasattr(data, "categories") and data.categories:
-            data.category_ids = [c.id for c in data.categories]
-            data.category_names = [c.name for c in data.categories]
-        else:
-            data.category_ids = data.category_ids if hasattr(data, "category_ids") else []
-            data.category_names = data.category_names if hasattr(data, "category_names") else []
-        return data
-
 
 class DishList(BaseModel):
     """菜品列表项."""
