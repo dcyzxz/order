@@ -143,13 +143,18 @@
   <!-- ==================== Profile / Login Page ==================== -->
   <div class="page" id="profile-page">
     <div class="container">
-      <div class="card text-center" style="margin-top:40px" id="profile-logged-in">
-        <div style="font-size:64px;margin-bottom:12px">👤</div>
+      <div class="card" style="margin-top:40px;text-align:center" id="profile-logged-in">
+        <div id="profile-avatar" style="font-size:64px;margin-bottom:8px;position:relative;display:inline-block;cursor:pointer" onclick="showProfileEdit()">
+          👤
+          <span style="font-size:12px;position:absolute;bottom:0;right:-8px;background:var(--green);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border:2px solid #fff">✏️</span>
+        </div>
         <div style="font-size:20px;font-weight:600" id="user-name-display">未登录</div>
-        <div style="font-size:14px;color:var(--text-secondary);margin-top:4px" id="user-role-display"></div>
-        <div style="margin-top:24px;display:flex;flex-direction:column;gap:12px">
-          <button class="btn btn-outline btn-block" id="logout-btn" onclick="logout()" style="display:none">退出登录</button>
-          <button class="btn btn-outline btn-block" id="admin-entry-btn" onclick="showPage('admin-page'); initAdmin();" style="display:none">管理后台</button>
+        <div style="font-size:14px;color:var(--text-secondary)" id="user-role-display"></div>
+        <div style="font-size:13px;color:#999;margin-top:4px" id="user-bio-display"></div>
+        <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
+          <button class="btn btn-outline btn-block" onclick="showProfileEdit()">✏️ 编辑资料</button>
+          <button class="btn btn-outline btn-block" id="admin-entry-btn" onclick="showPage('admin-page'); initAdmin();" style="display:none">⚙️ 管理后台</button>
+          <button class="btn btn-outline btn-block" id="logout-btn" onclick="logout()" style="display:none;color:var(--red);border-color:var(--red)">退出登录</button>
         </div>
       </div>
 
@@ -224,6 +229,29 @@
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="document.getElementById('review-modal').classList.add('hidden')">取消</button>
         <button class="btn btn-primary" onclick="submitReview()">确认通过</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Edit Modal -->
+  <div class="modal-overlay hidden" id="profile-modal" onclick="document.getElementById('profile-modal').classList.add('hidden')">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <h3>编辑资料</h3>
+      <div class="form-group">
+        <label>昵称</label>
+        <input class="form-input" id="f-profile-name" placeholder="你的昵称">
+      </div>
+      <div class="form-group">
+        <label>头像URL</label>
+        <input class="form-input" id="f-profile-avatar" placeholder="头像图片链接">
+      </div>
+      <div class="form-group">
+        <label>个人简介</label>
+        <textarea class="form-textarea" id="f-profile-bio" placeholder="介绍一下自己..." maxlength="256"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="document.getElementById('profile-modal').classList.add('hidden')">取消</button>
+        <button class="btn btn-primary" onclick="saveProfile()">保存</button>
       </div>
     </div>
   </div>

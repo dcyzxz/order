@@ -68,6 +68,8 @@ async def update_profile(
         if update.phone and not re.match(r"^1\d{10}$", update.phone):
             raise BusinessError(message="手机号格式不正确")
         current_user.phone = update.phone
+    if update.bio is not None:
+        current_user.bio = update.bio
 
     await db.flush()
     return success(data=UserOut.model_validate(current_user))

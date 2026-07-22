@@ -17,6 +17,7 @@ class User(TimestampMixin, Base):
     nickname: Mapped[str | None] = mapped_column(String(64), comment="昵称")
     avatar_url: Mapped[str | None] = mapped_column(String(512), comment="头像URL")
     phone: Mapped[str | None] = mapped_column(String(20), comment="手机号")
+    bio: Mapped[str | None] = mapped_column(String(256), comment="个人简介")
     role: Mapped[str] = mapped_column(String(20), default="user", comment="角色: admin/chef/user")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, comment="是否启用")
 

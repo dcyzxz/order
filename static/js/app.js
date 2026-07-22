@@ -183,6 +183,29 @@ async function doLogin() {
   }
 }
 
+function showProfileEdit() {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  document.getElementById('f-profile-name').value = user.nickname || '';
+  document.getElementById('f-profile-avatar').value = user.avatar_url || '';
+  document.getElementById('f-profile-bio').value = user.bio || '';
+  document.getElementById('profile-modal').classList.remove('hidden');
+}
+
+async function saveProfile() {
+  const data = {
+    nickname: document.getElementById('f-profile-name').value.trim() || null,
+    avatar_url: document.getElementById('f-profile-avatar').value.trim() || null,
+    bio: document.getElementById('f-profile-bio').value.trim() || null,
+  };
+  try {
+    const res = await userApi.updateProfile(data);
+    localStorage.setItem('user', JSON.stringify(res.data));
+    updateUserUI();
+    document.getElementById('profile-modal').classList.add('hidden');
+    toast('资料已更新');
+  } catch (e) { toast('保存失败: ' + e.message); }
+}
+
 function updateUserUI() {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   const loggedIn = !!user;
@@ -195,6 +218,10 @@ function updateUserUI() {
     const roleEl = document.getElementById('user-role-display');
     const roleMap = { admin: '管理员', chef: '厨师', user: '点餐用户' };
     if (roleEl) roleEl.textContent = roleMap[user.role] || user.role;
+    const bioEl = document.getElementById('user-bio-display');
+    if (bioEl) bioEl.textContent = user.bio || '';
+    const avatarEl = document.getElementById('profile-avatar');
+    if (avatarEl && user.avatar_url) avatarEl.innerHTML = '<img src="' + user.avatar_url + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover">';
   }
 
   const adminEntry = document.getElementById('admin-entry-btn');

@@ -29,6 +29,7 @@ class UserUpdate(BaseModel):
     nickname: str | None = Field(None, max_length=64)
     avatar_url: str | None = Field(None, max_length=512)
     phone: str | None = Field(None, max_length=20)
+    bio: str | None = Field(None, max_length=256)
     role: str | None = Field(None, pattern=r"^(admin|chef|user)$")
     is_active: bool | None = None
     password: str | None = Field(None, min_length=4, max_length=128, description="新密码")
@@ -41,6 +42,7 @@ class UserOut(BaseModel):
     nickname: str | None = None
     avatar_url: str | None = None
     phone: str | None = None
+    bio: str | None = None
     role: str = "user"
     is_active: bool = True
 
