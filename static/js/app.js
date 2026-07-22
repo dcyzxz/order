@@ -64,6 +64,7 @@ const adminApi = {
   // Chef orders
   getChefOrders: (params) => api('/admin/orders/chef?' + new URLSearchParams(params)),
   deleteOrder: (id) => api('/admin/orders/' + id, { method: 'DELETE' }),
+  deleteUser: (id) => api('/admin/users/' + id, { method: 'DELETE' }),
 };
 
 /* ========== Helpers ========== */
@@ -635,10 +636,13 @@ function showAdminDishModal(id) {
     </div>
     <div class="form-group">
       <label>分类</label>
-      <select class="form-select" id="f-dish-cat">
-        <option value="">无分类</option>
-        ${cats.map(c => `<option value="${c.id}" ${dish && dish.category_id === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
-      </select>
+      <div style="display:flex;gap:8px">
+        <select class="form-select" id="f-dish-cat" style="flex:1">
+          <option value="">无分类</option>
+          ${cats.map(c => `<option value="${c.id}" ${dish && dish.category_id === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+        </select>
+        <button class="btn btn-small btn-primary" onclick="showAddCategoryInModal()" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;font-size:20px;padding:0">+</button>
+      </div>
     </div>
     <div class="form-group">
       <label>描述</label>
@@ -648,6 +652,27 @@ function showAdminDishModal(id) {
   window._editDishId = id || null;
   document.getElementById('dish-modal-title').textContent = id ? '编辑菜品' : '新增菜品';
   document.getElementById('dish-modal').classList.remove('hidden');
+}
+
+async function showAddCategoryInModal() {
+  const name = prompt('请输入新分类名称：');
+  if (!name || !name.trim()) return;
+  try {
+    await adminApi.createCategory({ name: name.trim() });
+    toast('分类已创建');
+    // Refresh categories and re-show modal
+    const catRes = await adminApi.getCategories();
+    window._adminCategories = catRes.data || [];
+    // Re-populate the dish modal with updated categories
+    const cats = window._adminCategories;
+    const sel = document.getElementById('f-dish-cat');
+    if (sel) {
+      const currentVal = sel.value;
+      sel.innerHTML = '<option value="">无分类</option>' +
+        cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      sel.value = currentVal;
+    }
+  } catch (e) { toast('创建失败: ' + e.message); }
 }
 
 async function saveDish() {
@@ -833,6 +858,15 @@ async function loadAdminMaterials() {
   } catch (e) { console.error(e); }
 }
 
+async function adminDeleteUser(id) {
+  if (!confirm('确定要删除此用户吗？')) return;
+  try {
+    await adminApi.deleteUser(id);
+    toast('用户已删除');
+    loadAdminUsers();
+  } catch (e) { toast('删除失败: ' + e.message); }
+}
+
 // Admin Users
 async function loadAdminUsers() {
   try {
@@ -847,9 +881,12 @@ async function loadAdminUsers() {
             <strong>${u.nickname || u.username}</strong>
             <span style="font-size:12px;margin-left:8px;color:var(--text-secondary)">@${u.username}</span>
           </div>
-          <span style="font-size:12px;padding:2px 8px;border-radius:4px;background:${u.role === 'admin' ? '#fef0f0' : u.role === 'chef' ? '#fdf6ec' : '#f0f9eb'};color:${u.role === 'admin' ? '#f56c6c' : u.role === 'chef' ? '#e6a23c' : '#67c23a'}">
-            ${u.role === 'admin' ? '管理员' : u.role === 'chef' ? '厨师' : '点餐用户'}
-          </span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:12px;padding:2px 8px;border-radius:4px;background:${u.role === 'admin' ? '#fef0f0' : u.role === 'chef' ? '#fdf6ec' : '#f0f9eb'};color:${u.role === 'admin' ? '#f56c6c' : u.role === 'chef' ? '#e6a23c' : '#67c23a'}">
+              ${u.role === 'admin' ? '管理员' : u.role === 'chef' ? '厨师' : '点餐用户'}
+            </span>
+            <button class="btn btn-small btn-outline" style="color:var(--red);border-color:var(--red);font-size:12px;padding:2px 10px" onclick="adminDeleteUser(${u.id})">删除</button>
+          </div>
         </div>
         <div class="text-secondary mt-8">${u.is_active ? '正常' : '已禁用'}</div>
       </div>

@@ -27,7 +27,9 @@
       "Bash(npx railway *)",
       "Bash(npx *)",
       "Bash(curl *)",
-      "Bash(pip show *)"
+      "Bash(pip show *)",
+      "Bash(ssh-keygen -t ed25519 -f ~/.ssh/github_deploy -N \"\" -q)",
+      "Bash(ssh-add ~/.ssh/github_deploy)"
     ]
   }
 }

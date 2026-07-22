@@ -103,6 +103,25 @@ async def update_user(
     return success(data=UserOut.model_validate(user), message="用户更新成功")
 
 
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: int,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """管理员删除用户."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise NotFoundError(message="用户不存在")
+    if user.id == admin.id:
+        raise BusinessError(message="不能删除自己")
+
+    await db.delete(user)
+    await db.flush()
+    return success(message="用户已删除")
+
+
 # ==================== 菜品管理 ====================
 
 @router.post("/dishes")
