@@ -37,6 +37,7 @@ FALLBACK_RESPONSES = [
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=200)
+    history: list[dict[str, str]] = Field(default_factory=list, description="对话历史")
 
 
 class ChatResponse(BaseModel):
@@ -91,9 +92,14 @@ async def chat(
     reply = ""
     dishes = []
     user_id = current_user.id
+    history = chat_req.history or []
 
-    # 1. Greeting
-    if _match_keyword(msg, ["你好", "嗨", "hello", "hi", "在吗", "在不在", "开始"]):
+    # Check if user already said hi (second message onwards = no greeting)
+    previous_msgs = [h.get("content", "") for h in history if h.get("role") == "user"]
+    is_first_interaction = len(previous_msgs) <= 1
+
+    # 1. Greeting (only on first message)
+    if _match_keyword(msg, ["你好", "嗨", "hello", "hi", "在吗", "在不在", "开始"]) and is_first_interaction:
         reply = random.choice(GREETING_RESPONSES)
         dishes = await _get_recommended_dishes(db, user_id, limit=3)
 

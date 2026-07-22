@@ -1320,18 +1320,19 @@ function switchAdminTab(tab) {
 
 // ==================== AI Chat ====================
 const _chatFoodEmojis = ['🥩', '🥬', '🥘', '🍜', '🍛', '🥗', '🌮', '🍕', '🍣', '🥟'];
+let _chatHistory = [];
 
 async function loadRecommend() {
   const token = localStorage.getItem('token');
   const chatBox = document.getElementById('chat-messages');
   if (!chatBox) return;
 
+  _chatHistory = [];
   chatBox.innerHTML = '';
   if (!token) {
     addChatBubble('bot', '👋 请先登录，我才能根据你的口味推荐菜品哦！');
     return;
   }
-  // Initial greeting
   addChatBubble('bot', '你好呀！我是你的智能点餐助手 🤖\n\n告诉我你想吃什么，比如：\n• "推荐" — 我帮你选\n• "想吃肉/海鲜/辣的" — 按口味推荐\n• "随便吃点" — 随机推荐');
 }
 
@@ -1395,15 +1396,19 @@ async function sendChat() {
   if (!msg) return;
   input.value = '';
 
+  _chatHistory.push({ role: 'user', content: msg });
   addChatBubble('user', msg);
   addChatBubble('bot', '🤔 思考中...');
 
   try {
-    const res = await api('/recommend/chat', { method: 'POST', data: { message: msg } });
-    // Remove thinking bubble
+    const res = await api('/recommend/chat', {
+      method: 'POST',
+      data: { message: msg, history: _chatHistory.slice(-10) },
+    });
     const chatBox = document.getElementById('chat-messages');
     if (chatBox.lastChild) chatBox.removeChild(chatBox.lastChild);
 
+    _chatHistory.push({ role: 'assistant', content: res.data.reply });
     addChatBubble('bot', res.data.reply, res.data.dishes);
   } catch (e) {
     const chatBox = document.getElementById('chat-messages');
