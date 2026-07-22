@@ -55,6 +55,7 @@ class DishList(BaseModel):
     name: str
     price: Decimal | None = None
     image_url: str | None = None
+    category_id: int | None = None
     category_name: str | None = None
     status: str
     is_recommended: bool = False

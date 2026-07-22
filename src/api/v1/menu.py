@@ -77,6 +77,7 @@ async def list_dishes(
             name=d.name,
             price=d.price,
             image_url=d.image_url,
+            category_id=d.category_id,
             category_name=d.category.name if d.category else None,
             status=d.status,
             is_recommended=d.is_recommended,

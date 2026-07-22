@@ -216,24 +216,32 @@ async function loadCategories() {
   try {
     const res = await menuApi.getCategories();
     allCategories = res.data || [];
-    renderCategories();
+    if (allCategories.length > 0 && !activeCategory) {
+      activeCategory = allCategories[0].id;
+    }
+    renderSidebar();
   } catch (e) { console.error(e); }
 }
 
-function renderCategories() {
-  const bar = document.getElementById('category-bar');
-  bar.innerHTML = `
-    <div class="category-tab ${activeCategory === null ? 'active' : ''}" onclick="switchCategory(null)">全部</div>
-    ${allCategories.map(c => `
-      <div class="category-tab ${activeCategory === c.id ? 'active' : ''}" onclick="switchCategory(${c.id})">${c.name}</div>
-    `).join('')}
-  `;
+function renderSidebar() {
+  const bar = document.getElementById('menu-sidebar');
+  if (!bar) return;
+  bar.innerHTML = allCategories.map(c => `
+    <div onclick="switchCategory(${c.id})"
+      style="padding:14px 8px;text-align:center;font-size:13px;cursor:pointer;
+        ${activeCategory === c.id ? 'background:#fff;color:var(--green);font-weight:600;border-left:3px solid var(--green)' : 'color:#666;border-left:3px solid transparent'}">
+      ${c.name}
+    </div>
+  `).join('');
 }
 
 function switchCategory(id) {
   activeCategory = id;
-  renderCategories();
+  renderSidebar();
   renderDishList();
+  // Scroll dishes to top
+  const content = document.getElementById('menu-content');
+  if (content) content.scrollTop = 0;
 }
 
 async function loadDishes() {
@@ -247,22 +255,23 @@ async function loadDishes() {
 function renderDishList() {
   const list = document.getElementById('dish-list');
   const filtered = activeCategory ? allDishes.filter(d => d.category_id === activeCategory) : allDishes;
-  if (filtered.length === 0) {
-    list.innerHTML = '<div class="text-center text-secondary" style="padding:60px 0">暂无菜品</div>';
+
+  if (!filtered || filtered.length === 0) {
+    list.innerHTML = '<div class="text-center text-secondary" style="padding:60px 0;font-size:14px">暂无菜品</div>';
     return;
   }
-  list.innerHTML = filtered.map(d => `
-    <div class="dish-card" onclick="showDishDetail(${d.id})">
-      <div class="dish-img">🍽️</div>
+  list.innerHTML = '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">共 ' + filtered.length + ' 道菜</div>' +
+    filtered.map(d => `
+    <div class="dish-card" onclick="showDishDetail(${d.id})" style="margin-bottom:10px">
+      <div class="dish-img" style="width:72px;height:72px;font-size:28px">🍽️</div>
       <div class="dish-info">
-        <div class="dish-name">${d.name}</div>
-        <div class="dish-desc">${d.category_name || ''}</div>
-        <div class="dish-footer">
-          <div class="dish-price">${d.price !== null ? '¥' + d.price : '待定价'}</div>
+        <div class="dish-name" style="font-size:14px">${d.name}</div>
+        <div class="dish-footer" style="margin-top:8px">
+          <div class="dish-price" style="font-size:16px">${d.price !== null ? '¥' + d.price : '待定价'}</div>
           <div class="dish-tags">${d.is_recommended ? '<span class="tag">推荐</span>' : ''}</div>
         </div>
       </div>
-      <button class="add-cart-btn" onclick="event.stopPropagation(); quickAdd(${d.id})">+</button>
+      <button class="add-cart-btn" onclick="event.stopPropagation(); quickAdd(${d.id})" style="width:26px;height:26px;font-size:16px">+</button>
     </div>
   `).join('');
 }
