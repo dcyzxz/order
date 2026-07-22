@@ -364,6 +364,22 @@ async def admin_list_materials(
     return success(data=[MaterialOut.model_validate(m) for m in mats])
 
 
+@router.delete("/materials/{material_id}")
+async def delete_material(
+    material_id: int,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """管理员删除材料."""
+    result = await db.execute(select(Material).where(Material.id == material_id))
+    mat = result.scalar_one_or_none()
+    if mat is None:
+        raise NotFoundError(message="材料不存在")
+    await db.delete(mat)
+    await db.flush()
+    return success(message="材料已删除")
+
+
 # ==================== 订单管理 ====================
 
 @router.get("/orders/chef")

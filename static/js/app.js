@@ -66,6 +66,7 @@ const adminApi = {
   getChefOrders: (params) => api('/admin/orders/chef?' + new URLSearchParams(params)),
   deleteOrder: (id) => api('/admin/orders/' + id, { method: 'DELETE' }),
   deleteUser: (id) => api('/admin/users/' + id, { method: 'DELETE' }),
+  deleteMaterial: (id) => api('/admin/materials/' + id, { method: 'DELETE' }),
 };
 
 /* ========== Helpers ========== */
@@ -663,8 +664,14 @@ function showAdminDishModal(id) {
       <label>描述</label>
       <textarea class="form-textarea" id="f-dish-desc">${dish ? dish.description || '' : ''}</textarea>
     </div>
+    <div class="form-group">
+      <label>材料 <span style="font-size:12px;color:var(--text-secondary)">（可多选）</span></label>
+      <div id="dish-material-select" style="max-height:160px;overflow-y:auto;border:1px solid #eee;border-radius:8px;padding:8px"></div>
+    </div>
   `;
   window._editDishId = id || null;
+  window._selectedMaterials = dish && dish.materials ? dish.materials.map(m => m.id) : [];
+  loadDishMaterials();
   document.getElementById('dish-modal-title').textContent = id ? '编辑菜品' : '新增菜品';
   document.getElementById('dish-modal').classList.remove('hidden');
 }
@@ -690,12 +697,39 @@ async function showAddCategoryInModal() {
   } catch (e) { toast('创建失败: ' + e.message); }
 }
 
+async function loadDishMaterials() {
+  try {
+    const res = await adminApi.getMaterials();
+    const mats = res.data || [];
+    const el = document.getElementById('dish-material-select');
+    if (!el) return;
+    const selected = window._selectedMaterials || [];
+    el.innerHTML = mats.map(m => `
+      <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:14px;cursor:pointer;border-bottom:1px solid #f5f5f5">
+        <input type="checkbox" value="${m.id}" ${selected.includes(m.id) ? 'checked' : ''} onchange="toggleDishMaterial(${m.id}, this.checked)">
+        <span>${m.name}</span>
+        <span style="font-size:11px;color:var(--text-secondary);margin-left:auto">${m.category || ''}</span>
+      </label>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+function toggleDishMaterial(id, checked) {
+  if (!window._selectedMaterials) window._selectedMaterials = [];
+  if (checked) {
+    if (!window._selectedMaterials.includes(id)) window._selectedMaterials.push(id);
+  } else {
+    window._selectedMaterials = window._selectedMaterials.filter(i => i !== id);
+  }
+}
+
 async function saveDish() {
   const data = {
     name: document.getElementById('f-dish-name').value,
     price: document.getElementById('f-dish-price').value ? Number(document.getElementById('f-dish-price').value) : null,
     category_id: document.getElementById('f-dish-cat').value ? Number(document.getElementById('f-dish-cat').value) : null,
     description: document.getElementById('f-dish-desc').value || null,
+    material_ids: window._selectedMaterials || [],
   };
   if (!data.name.trim()) { toast('请输入名称'); return; }
   try {
@@ -863,14 +897,72 @@ async function loadAdminMaterials() {
       <div style="margin-bottom:16px">
         <div style="font-weight:600;font-size:15px;margin-bottom:8px;padding-left:8px;border-left:3px solid var(--green)">${key}</div>
         ${list.map(m => `
-          <div class="card" style="padding:10px 12px;display:flex;align-items:center;justify-content:space-between">
-            <span>${m.name} ${m.is_allergen ? '<span style="font-size:11px;color:var(--red)">⚠️ 过敏原</span>' : ''}</span>
-            <span class="text-secondary">${m.description || ''}</span>
+          <div class="card" style="padding:10px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div>
+              <span>${m.name}</span>
+              ${m.is_allergen ? '<span style="font-size:11px;color:var(--red);margin-left:6px">⚠️ 过敏原</span>' : ''}
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-small btn-outline" style="font-size:12px;padding:2px 10px" onclick="showEditMaterialModal(${m.id})">编辑</button>
+              <button class="btn btn-small btn-outline" style="color:var(--red);border-color:var(--red);font-size:12px;padding:2px 10px" onclick="adminDeleteMaterial(${m.id})">删除</button>
+            </div>
           </div>
         `).join('')}
       </div>
     `).join('');
   } catch (e) { console.error(e); }
+}
+
+function showAddMaterialModal() {
+  window._editMaterialId = null;
+  document.getElementById('material-modal-title').textContent = '新增材料';
+  document.getElementById('f-mat-name').value = '';
+  document.getElementById('f-mat-category').value = '';
+  document.getElementById('f-mat-allergen').checked = false;
+  document.getElementById('material-modal').classList.remove('hidden');
+}
+
+async function showEditMaterialModal(id) {
+  try {
+    const res = await adminApi.getMaterials();
+    const mat = (res.data || []).find(m => m.id === id);
+    if (!mat) return;
+    window._editMaterialId = id;
+    document.getElementById('material-modal-title').textContent = '编辑材料';
+    document.getElementById('f-mat-name').value = mat.name;
+    document.getElementById('f-mat-category').value = mat.category || '';
+    document.getElementById('f-mat-allergen').checked = mat.is_allergen;
+    document.getElementById('material-modal').classList.remove('hidden');
+  } catch (e) { toast('加载失败'); }
+}
+
+async function saveMaterial() {
+  const name = document.getElementById('f-mat-name').value.trim();
+  if (!name) { toast('请输入材料名称'); return; }
+  const data = {
+    name,
+    category: document.getElementById('f-mat-category').value || null,
+    is_allergen: document.getElementById('f-mat-allergen').checked,
+  };
+  try {
+    if (window._editMaterialId) {
+      await adminApi.updateMaterial(window._editMaterialId, data);
+    } else {
+      await adminApi.createMaterial(data);
+    }
+    document.getElementById('material-modal').classList.add('hidden');
+    toast('保存成功');
+    loadAdminMaterials();
+  } catch (e) { toast('保存失败: ' + e.message); }
+}
+
+async function adminDeleteMaterial(id) {
+  if (!confirm('确定要删除此材料吗？')) return;
+  try {
+    await adminApi.deleteMaterial(id);
+    toast('材料已删除');
+    loadAdminMaterials();
+  } catch (e) { toast('删除失败'); }
 }
 
 // Admin Categories

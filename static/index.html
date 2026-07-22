@@ -95,6 +95,7 @@
       </div>
 
       <div id="admin-tab-materials" class="admin-tab" style="display:none">
+        <button class="btn btn-primary btn-small mb-8" onclick="showAddMaterialModal()">+ 新增材料</button>
         <div id="admin-material-list"></div>
       </div>
 
@@ -244,6 +245,41 @@
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="document.getElementById('user-modal').classList.add('hidden')">取消</button>
         <button class="btn btn-primary" onclick="saveUser()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Material Modal -->
+  <div class="modal-overlay hidden" id="material-modal" onclick="document.getElementById('material-modal').classList.add('hidden')">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <h3 id="material-modal-title">新增材料</h3>
+      <div class="form-group">
+        <label>材料名称</label>
+        <input class="form-input" id="f-mat-name" placeholder="如: 猪肉、盐">
+      </div>
+      <div class="form-group">
+        <label>分类（选填）</label>
+        <select class="form-select" id="f-mat-category">
+          <option value="">无分类</option>
+          <option value="肉类">肉类</option>
+          <option value="蔬菜">蔬菜</option>
+          <option value="调料">调料</option>
+          <option value="主食">主食</option>
+          <option value="豆制品">豆制品</option>
+          <option value="海鲜">海鲜</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>是否为常见过敏原</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer">
+          <input type="checkbox" id="f-mat-allergen">
+          是
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="document.getElementById('material-modal').classList.add('hidden')">取消</button>
+        <button class="btn btn-primary" onclick="saveMaterial()">保存</button>
       </div>
     </div>
   </div>
