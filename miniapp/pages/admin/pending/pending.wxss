@@ -1,0 +1,31 @@
+.filter-bar {
+  display: flex;
+  padding: 20rpx 30rpx;
+  background: #fff;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+.filter-tab { padding: 8rpx 20rpx; font-size: 24rpx; color: #666; border-radius: 6rpx; }
+.filter-tab.active { background: #f0f9eb; color: #07c160; }
+.pending-header { display: flex; align-items: center; gap: 12rpx; margin-bottom: 8rpx; }
+.pending-name { font-size: 30rpx; font-weight: 600; }
+.pending-status { font-size: 20rpx; padding: 2rpx 8rpx; border-radius: 4rpx; }
+.status-pending_price { background: #fdf6ec; color: #e6a23c; }
+.status-approved { background: #f0f9eb; color: #67c23a; }
+.status-rejected { background: #fef0f0; color: #f56c6c; }
+.pending-user, .pending-desc, .pending-price { font-size: 24rpx; color: #666; display: block; margin-top: 4rpx; }
+.pending-price { color: #f56c6c; }
+.pending-actions { display: flex; gap: 16rpx; margin-top: 16rpx; justify-content: flex-end; }
+.action-btn { padding: 10rpx 30rpx; border: none; border-radius: 6rpx; font-size: 24rpx; }
+.approve { background: #07c160; color: #fff; }
+.reject { background: #f5f5f5; color: #666; }
+
+.modal-mask { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:1000; }
+.modal-dialog { background:#fff; border-radius:16rpx; padding:40rpx; width:600rpx; }
+.modal-title { font-size:32rpx; font-weight:600; display:block; text-align:center; margin-bottom:30rpx; }
+.modal-input, .modal-textarea, .modal-picker { border:1rpx solid #ddd; border-radius:8rpx; padding:16rpx; font-size:28rpx; margin-bottom:20rpx; width:100%; box-sizing:border-box; }
+.modal-textarea { min-height:100rpx; }
+.modal-picker { background:#f9f9f9; }
+.modal-actions { display:flex; justify-content:space-around; margin-top:30rpx; }
+.btn-cancel { background:#f5f5f5; color:#666; border:none; border-radius:44rpx; padding:16rpx 60rpx; }
+.btn-submit { background:#07c160; color:#fff; border:none; border-radius:44rpx; padding:16rpx 60rpx; }

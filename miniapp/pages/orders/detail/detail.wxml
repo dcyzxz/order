@@ -1,0 +1,35 @@
+<view class="container">
+  <view class="status-section card">
+    <text class="status-badge status-{{order.status}}">{{statusText(order.status)}}</text>
+    <text class="order-no">订单编号: {{order.orderNo}}</text>
+    <text class="order-time">{{order.createdAt}}</text>
+  </view>
+
+  <!-- 菜品明细 -->
+  <view class="section card">
+    <text class="section-title">🍽️ 菜品明细</text>
+    <view class="order-item" wx:for="{{order.items}}" wx:key="id">
+      <view class="item-info">
+        <text class="item-name">{{item.dishName}}</text>
+        <text class="item-excluded" wx:if="{{item.excludedMaterialIds.length > 0}}">忌口: {{item.excludedMaterialIds.length}}项</text>
+      </view>
+      <text class="item-qty">×{{item.quantity}}</text>
+      <text class="item-price">{{item.subtotal}}</text>
+    </view>
+  </view>
+
+  <!-- 备注 -->
+  <view class="section card" wx:if="{{order.note}}">
+    <text class="section-title">📝 备注</text>
+    <text class="note-text">{{order.note}}</text>
+  </view>
+
+  <!-- 底部 -->
+  <view class="fixed-bottom">
+    <view class="total-section">
+      <text class="total-label">合计: </text>
+      <text class="total-price">¥{{order.totalPrice}}</text>
+    </view>
+    <button class="cancel-btn" wx:if="{{order.status === 'pending'}}" bindtap="cancelOrder">取消订单</button>
+  </view>
+</view>

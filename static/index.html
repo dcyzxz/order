@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#07c160">
+  <title>点菜小程序</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="app-header">
+    <button class="back-btn" id="back-btn" onclick="goBack()" style="display:none">‹</button>
+    <h1 id="page-title">菜单</h1>
+    <button class="header-action" id="header-action" onclick="logout()" style="display:none">退出</button>
+  </div>
+
+  <!-- ==================== Menu Page ==================== -->
+  <div class="page active" id="menu-page">
+    <div class="container">
+      <div class="category-bar" id="category-bar"></div>
+      <div id="dish-list"></div>
+    </div>
+  </div>
+
+  <!-- ==================== Cart Page ==================== -->
+  <div class="page" id="cart-page">
+    <div class="container">
+      <div id="cart-list"></div>
+    </div>
+    <div class="cart-bottom" id="cart-bottom-bar" style="display:none">
+      <div class="cart-total">合计: <span id="cart-total">¥0.00</span></div>
+      <button class="btn btn-primary" onclick="createOrder()">去结算</button>
+    </div>
+  </div>
+
+  <!-- ==================== Orders Page ==================== -->
+  <div class="page" id="orders-page">
+    <div class="container">
+      <div class="order-status-bar">
+        <div class="category-tab active" data-status="all" onclick="filterOrder('all')">全部</div>
+        <div class="category-tab" data-status="pending" onclick="filterOrder('pending')">待处理</div>
+        <div class="category-tab" data-status="confirmed" onclick="filterOrder('confirmed')">已确认</div>
+        <div class="category-tab" data-status="preparing" onclick="filterOrder('preparing')">制作中</div>
+        <div class="category-tab" data-status="completed" onclick="filterOrder('completed')">已完成</div>
+        <div class="category-tab" data-status="cancelled" onclick="filterOrder('cancelled')">已取消</div>
+      </div>
+      <div id="order-list"></div>
+    </div>
+  </div>
+
+  <!-- ==================== Admin Page ==================== -->
+  <div class="page" id="admin-page">
+    <div class="container">
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-num" id="stats-active">-</div><div class="stat-label">在售菜品</div></div>
+        <div class="stat-box"><div class="stat-num" id="stats-pending">-</div><div class="stat-label">待审核</div></div>
+        <div class="stat-box"><div class="stat-num" id="stats-orders">-</div><div class="stat-label">待处理订单</div></div>
+      </div>
+
+      <div class="admin-nav" style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto">
+        <div class="category-tab active" data-tab="dishes" onclick="switchAdminTab('dishes')">菜品</div>
+        <div class="category-tab" data-tab="orders" onclick="switchAdminTab('orders')">订单</div>
+        <div class="category-tab" data-tab="pending" onclick="switchAdminTab('pending')">审核</div>
+        <div class="category-tab" data-tab="materials" onclick="switchAdminTab('materials')">材料</div>
+      </div>
+
+      <div id="admin-tab-dishes" class="admin-tab">
+        <button class="btn btn-primary btn-small mb-8" onclick="showAdminDishModal(null)">+ 新增菜品</button>
+        <div id="admin-dish-list"></div>
+      </div>
+
+      <div id="admin-tab-orders" class="admin-tab" style="display:none">
+        <div id="admin-order-list"></div>
+      </div>
+
+      <div id="admin-tab-pending" class="admin-tab" style="display:none">
+        <div id="admin-pending-list"></div>
+      </div>
+
+      <div id="admin-tab-materials" class="admin-tab" style="display:none">
+        <div id="admin-material-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Profile / Login Page ==================== -->
+  <div class="page" id="profile-page">
+    <div class="container">
+      <div class="card text-center" style="margin-top:40px">
+        <div style="font-size:64px;margin-bottom:12px" id="profile-avatar">👤</div>
+        <div style="font-size:20px;font-weight:600" id="user-name-display">未登录</div>
+        <div style="margin-top:24px;display:flex;flex-direction:column;gap:12px">
+          <button class="btn btn-primary btn-block" id="login-btn" onclick="doLogin()">登录</button>
+          <button class="btn btn-outline btn-block" id="logout-btn" onclick="logout()" style="display:none">退出登录</button>
+          <button class="btn btn-outline btn-block" id="admin-entry-btn" onclick="showPage('admin-page'); initAdmin();" style="display:none">管理后台</button>
+        </div>
+      </div>
+      <div class="card mt-16" style="display:none" id="pending-section">
+        <div class="flex-between mb-8">
+          <span style="font-weight:600">📝 我的待定菜品</span>
+          <button class="btn btn-small btn-primary" onclick="showSubmitPending()">提交新菜</button>
+        </div>
+        <div id="my-pending-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Detail Page ==================== -->
+  <div class="page" id="detail-page">
+    <div class="container" id="detail-content"></div>
+  </div>
+
+  <!-- ==================== Bottom Navigation ==================== -->
+  <div class="bottom-nav">
+    <div class="nav-item active" data-page="menu-page" onclick="showPage('menu-page')">
+      <span class="nav-icon">🍽️</span>
+      菜单
+    </div>
+    <div class="nav-item" data-page="cart-page" onclick="showPage('cart-page'); renderCart();">
+      <span class="nav-icon">🛒</span>
+      购物车 <span class="cart-badge" style="display:none;background:var(--red);color:#fff;font-size:10px;padding:1px 5px;border-radius:10px;vertical-align:top">0</span>
+    </div>
+    <div class="nav-item" data-page="orders-page" onclick="showPage('orders-page'); loadOrders();">
+      <span class="nav-icon">📋</span>
+      订单
+    </div>
+    <div class="nav-item" data-page="profile-page" onclick="showPage('profile-page'); initProfile();">
+      <span class="nav-icon">👤</span>
+      我的
+    </div>
+  </div>
+
+  <!-- ==================== Modals ==================== -->
+  <!-- Dish Modal -->
+  <div class="modal-overlay hidden" id="dish-modal" onclick="document.getElementById('dish-modal').classList.add('hidden')">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <h3 id="dish-modal-title">新增菜品</h3>
+      <div id="dish-form"></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="document.getElementById('dish-modal').classList.add('hidden')">取消</button>
+        <button class="btn btn-primary" onclick="saveDish()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review Modal -->
+  <div class="modal-overlay hidden" id="review-modal" onclick="document.getElementById('review-modal').classList.add('hidden')">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <h3>审核待定价菜品</h3>
+      <div id="review-form"></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="document.getElementById('review-modal').classList.add('hidden')">取消</button>
+        <button class="btn btn-primary" onclick="submitReview()">确认通过</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit Pending Modal -->
+  <div class="modal-overlay hidden" id="pending-modal" onclick="document.getElementById('pending-modal').classList.add('hidden')">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <h3>提交新菜品</h3>
+      <div class="form-group">
+        <label>菜品名称</label>
+        <input class="form-input" id="f-pending-name" placeholder="请输入菜品名称">
+      </div>
+      <div class="form-group">
+        <label>描述（选填）</label>
+        <textarea class="form-textarea" id="f-pending-desc" placeholder="菜品描述"></textarea>
+      </div>
+      <div class="form-group">
+        <label>建议价格（选填）</label>
+        <input class="form-input" id="f-pending-price" type="number" step="0.01" placeholder="建议价格">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="document.getElementById('pending-modal').classList.add('hidden')">取消</button>
+        <button class="btn btn-primary" onclick="submitPendingDish()">提交</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    // Override showPage to handle back button
+    const _origShowPage = showPage;
+    showPage = function(id) {
+      _origShowPage(id);
+      const backBtn = document.getElementById('back-btn');
+      const headerAction = document.getElementById('header-action');
+      const titles = {
+        'menu-page': '菜单',
+        'cart-page': '购物车',
+        'orders-page': '订单',
+        'admin-page': '管理后台',
+        'profile-page': '我的',
+        'detail-page': '详情',
+      };
+      backBtn.style.display = id === 'detail-page' ? '' : 'none';
+      headerAction.style.display = 'none';
+      document.getElementById('page-title').textContent = titles[id] || '点菜';
+    };
+
+    function goBack() {
+      showPage('menu-page');
+    }
+
+    // Profile page
+    async function initProfile() {
+      const { token, user } = await checkLogin();
+      const loggedIn = !!token;
+      document.getElementById('login-btn').style.display = loggedIn ? 'none' : '';
+      document.getElementById('logout-btn').style.display = loggedIn ? '' : 'none';
+      document.getElementById('user-name-display').textContent = user ? user.nickname || '用户' : '未登录';
+
+      const isAdmin = user && user.is_admin;
+      document.getElementById('admin-entry-btn').style.display = isAdmin ? '' : 'none';
+
+      // Pending dishes section
+      const section = document.getElementById('pending-section');
+      if (loggedIn) {
+        section.style.display = '';
+        try {
+          const res = await menuApi.getMyPendingDishes();
+          const list = res.data || [];
+          document.getElementById('my-pending-list').innerHTML = list.length === 0
+            ? '<div class="text-secondary" style="padding:12px 0">暂无提交记录</div>'
+            : list.map(d => `
+              <div class="flex-between" style="padding:8px 0;border-bottom:1px solid var(--border)">
+                <span>${d.name}</span>
+                <span style="font-size:12px;color:${d.status === 'pending_price' ? '#e6a23c' : d.status === 'approved' ? '#67c23a' : '#f56c6c'}">
+                  ${d.status === 'pending_price' ? '待审核' : d.status === 'approved' ? '已通过 ¥' + d.admin_price : '已驳回'}
+                </span>
+              </div>
+            `).join('');
+        } catch(e) { console.error(e); }
+      } else {
+        section.style.display = 'none';
+      }
+    }
+
+    function showSubmitPending() {
+      document.getElementById('pending-modal').classList.remove('hidden');
+    }
+
+    async function submitPendingDish() {
+      const name = document.getElementById('f-pending-name').value;
+      if (!name.trim()) { toast('请输入菜品名称'); return; }
+      try {
+        await menuApi.submitPendingDish({
+          name: name,
+          description: document.getElementById('f-pending-desc').value || undefined,
+          suggested_price: document.getElementById('f-pending-price').value ? Number(document.getElementById('f-pending-price').value) : undefined,
+        });
+        document.getElementById('pending-modal').classList.add('hidden');
+        document.getElementById('f-pending-name').value = '';
+        document.getElementById('f-pending-desc').value = '';
+        document.getElementById('f-pending-price').value = '';
+        toast('提交成功，等待审核');
+        initProfile();
+      } catch(e) { toast('提交失败'); }
+    }
+
+    // Override showPage to trigger loads
+    const __origShowPage = showPage;
+    showPage = function(id) {
+      __origShowPage(id);
+      if (id === 'admin-page' && document.querySelector('.nav-item[data-page="admin-page"]')) {
+        initAdmin();
+      }
+    };
+  </script>
+</body>
+</html>

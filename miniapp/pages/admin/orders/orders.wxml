@@ -1,0 +1,38 @@
+<view class="container">
+  <view class="filter-bar">
+    <view class="filter-tab {{filterStatus === null ? 'active' : ''}}" bindtap="filterStatus=null; loadOrders(true)">全部</view>
+    <view class="filter-tab {{filterStatus === 'pending' ? 'active' : ''}}" bindtap="filterStatus='pending'; loadOrders(true)">待处理</view>
+    <view class="filter-tab {{filterStatus === 'confirmed' ? 'active' : ''}}" bindtap="filterStatus='confirmed'; loadOrders(true)">已确认</view>
+    <view class="filter-tab {{filterStatus === 'preparing' ? 'active' : ''}}" bindtap="filterStatus='preparing'; loadOrders(true)">制作中</view>
+    <view class="filter-tab {{filterStatus === 'completed' ? 'active' : ''}}" bindtap="filterStatus='completed'; loadOrders(true)">已完成</view>
+    <view class="filter-tab {{filterStatus === 'cancelled' ? 'active' : ''}}" bindtap="filterStatus='cancelled'; loadOrders(true)">已取消</view>
+  </view>
+
+  <view class="order-list">
+    <view class="order-item card" wx:for="{{orders}}" wx:key="id">
+      <view class="order-header">
+        <text class="order-no">{{item.orderNo}}</text>
+        <text class="order-status status-{{item.status}}">{{statusText(item.status)}}</text>
+      </view>
+      <view class="order-body">
+        <text class="order-user">用户ID: {{item.userId}}</text>
+        <text class="order-total">¥{{item.totalPrice}}</text>
+      </view>
+      <view class="order-items" wx:if="{{item.items && item.items.length > 0}}">
+        <view class="order-item-row" wx:for="{{item.items}}" wx:key="id">
+          <text>{{item.dishName}} ×{{item.quantity}}</text>
+        </view>
+      </view>
+      <view class="order-footer">
+        <text class="order-time">{{item.createdAt}}</text>
+        <view class="order-actions" wx:if="{{item.status === 'pending'}}">
+          <button class="action-btn" bindtap="updateStatus" data-id="{{item.id}}" data-status="confirmed">确认</button>
+          <button class="action-btn cancel" bindtap="updateStatus" data-id="{{item.id}}" data-status="cancelled">取消</button>
+        </view>
+        <button wx:elif="{{item.status === 'confirmed'}}" class="action-btn" bindtap="updateStatus" data-id="{{item.id}}" data-status="preparing">开始制作</button>
+        <button wx:elif="{{item.status === 'preparing'}}" class="action-btn complete" bindtap="updateStatus" data-id="{{item.id}}" data-status="completed">完成</button>
+      </view>
+    </view>
+  </view>
+  <view class="loading" wx:if="{{loading}}">加载中...</view>
+</view>

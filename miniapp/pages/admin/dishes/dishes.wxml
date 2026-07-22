@@ -1,0 +1,49 @@
+<view class="container">
+  <!-- 操作栏 -->
+  <view class="action-bar">
+    <button class="add-btn" bindtap="showAddDialog">+ 新增菜品</button>
+    <view class="filter-tabs">
+      <view class="filter-tab {{filterStatus === null ? 'active' : ''}}" bindtap="onFilterChange" data-status="{{null}}">全部</view>
+      <view class="filter-tab {{filterStatus === 'active' ? 'active' : ''}}" bindtap="onFilterChange" data-status="active">在售</view>
+      <view class="filter-tab {{filterStatus === 'inactive' ? 'active' : ''}}" bindtap="onFilterChange" data-status="inactive">已下架</view>
+      <view class="filter-tab {{filterStatus === 'pending_price' ? 'active' : ''}}" bindtap="onFilterChange" data-status="pending_price">待定价</view>
+    </view>
+  </view>
+
+  <view class="dish-list">
+    <view class="dish-item card" wx:for="{{dishes}}" wx:key="id">
+      <view class="dish-info">
+        <view class="dish-header">
+          <text class="dish-name">{{item.name}}</text>
+          <text class="dish-status status-{{item.status}}">{{statusText(item.status)}}</text>
+        </view>
+        <text class="dish-price" wx:if="{{item.price}}">¥{{item.price}}</text>
+        <text class="dish-category" wx:if="{{item.categoryName}}">{{item.categoryName}}</text>
+      </view>
+      <view class="dish-actions">
+        <button class="action-btn edit" bindtap="showEditDialog" data-item="{{item}}">编辑</button>
+        <button class="action-btn {{item.status === 'active' ? 'offline' : 'online'}}" bindtap="toggleStatus" data-id="{{item.id}}" data-status="{{item.status}}">
+          {{item.status === 'active' ? '下架' : '上架'}}
+        </button>
+      </view>
+    </view>
+  </view>
+  <view class="loading" wx:if="{{loading}}">加载中...</view>
+</view>
+
+<!-- 编辑弹窗 -->
+<view class="modal-mask" wx:if="{{showEditModal}}" bindtap="closeEditDialog">
+  <view class="modal-dialog" catchtap="stopPropagation">
+    <text class="modal-title">{{editId ? '编辑菜品' : '新增菜品'}}</text>
+    <input class="modal-input" placeholder="菜品名称" value="{{form.name}}" bindinput="onNameInput" />
+    <input class="modal-input" placeholder="价格" type="digit" value="{{form.price}}" bindinput="onPriceInput" />
+    <textarea class="modal-textarea" placeholder="菜品描述" value="{{form.description}}" bindinput="onDescInput"></textarea>
+    <picker mode="selector" range="{{categories}}" range-key="name" bindchange="onCategoryChange">
+      <view class="modal-picker">{{form.categoryName || '选择分类'}}</view>
+    </picker>
+    <view class="modal-actions">
+      <button class="btn-cancel" bindtap="closeEditDialog">取消</button>
+      <button class="btn-submit" bindtap="saveDish">保存</button>
+    </view>
+  </view>
+</view>

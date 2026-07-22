@@ -1,0 +1,26 @@
+<view class="container">
+  <view class="order-items card">
+    <text class="section-title">📋 订单明细</text>
+    <view class="item" wx:for="{{cartItems}}" wx:key="dishId">
+      <view class="item-info">
+        <text class="item-name">{{item.dishName}}</text>
+        <text class="item-excluded" wx:if="{{item.excludedMaterialIds.length > 0}}">忌口: {{item.excludedMaterialIds.length}}项</text>
+      </view>
+      <text class="item-qty">×{{item.quantity}}</text>
+      <text class="item-price">{{item.subtotal}}</text>
+    </view>
+  </view>
+
+  <view class="note-section card">
+    <text class="section-title">📝 备注</text>
+    <textarea class="note-input" placeholder="请输入备注信息（选填）" maxlength="500" bindinput="onNoteInput" value="{{note}}"></textarea>
+  </view>
+
+  <view class="fixed-bottom">
+    <view class="total-section">
+      <text class="total-label">合计: </text>
+      <text class="total-price">{{totalPriceText}}</text>
+    </view>
+    <button class="submit-btn" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitOrder">提交订单</button>
+  </view>
+</view>

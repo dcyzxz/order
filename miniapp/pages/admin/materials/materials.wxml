@@ -1,0 +1,37 @@
+<view class="container">
+  <view class="action-bar">
+    <button class="add-btn" bindtap="showAddDialog">+ 新增材料</button>
+  </view>
+
+  <view class="groups">
+    <view class="group" wx:for="{{groups}}" wx:key="key">
+      <text class="group-title">{{item.key || '未分类'}}</text>
+      <view class="material-item card" wx:for="{{item.list}}" wx:for-item="mat" wx:key="id">
+        <view class="material-info">
+          <text class="material-name">{{mat.name}}</text>
+          <text class="material-desc" wx:if="{{mat.description}}">{{mat.description}}</text>
+        </view>
+        <text class="allergen-tag" wx:if="{{mat.isAllergen}}">过敏原</text>
+        <button class="edit-btn" bindtap="showEditDialog" data-item="{{mat}}">编辑</button>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 编辑弹窗 -->
+<view class="modal-mask" wx:if="{{showEditModal}}" bindtap="closeEdit">
+  <view class="modal-dialog" catchtap="stopPropagation">
+    <text class="modal-title">{{editId ? '编辑材料' : '新增材料'}}</text>
+    <input class="modal-input" placeholder="材料名称" value="{{form.name}}" bindinput="onNameInput" />
+    <input class="modal-input" placeholder="分类（如: 肉类、蔬菜）" value="{{form.category}}" bindinput="onCategoryInput" />
+    <textarea class="modal-textarea" placeholder="材料说明（选填）" value="{{form.description}}" bindinput="onDescInput"></textarea>
+    <label class="modal-checkbox">
+      <checkbox checked="{{form.isAllergen}}" bindchange="onAllergenChange" />
+      <text>是否为常见过敏原</text>
+    </label>
+    <view class="modal-actions">
+      <button class="btn-cancel" bindtap="closeEdit">取消</button>
+      <button class="btn-submit" bindtap="saveMaterial">保存</button>
+    </view>
+  </view>
+</view>

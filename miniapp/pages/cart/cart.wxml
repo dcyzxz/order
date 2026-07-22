@@ -1,0 +1,37 @@
+<view class="container">
+  <!-- 购物车列表 -->
+  <view class="cart-list" wx:if="{{cartItems.length > 0}}">
+    <view class="cart-item card" wx:for="{{cartItems}}" wx:key="dishId" data-index="{{index}}">
+      <image class="item-image" src="{{item.imageUrl || '/images/dish-placeholder.png'}}" mode="aspectFill" />
+      <view class="item-content">
+        <text class="item-name">{{item.dishName}}</text>
+        <text class="item-price">¥{{item.price}}</text>
+        <view class="item-excluded" wx:if="{{item.excludedMaterialIds.length > 0}}">
+          <text class="excluded-text">忌口中</text>
+        </view>
+      </view>
+      <view class="quantity-controls">
+        <button class="qty-btn" data-index="{{index}}" bindtap="decrement" disabled="{{item.quantity <= 1}}">−</button>
+        <text class="qty-value">{{item.quantity}}</text>
+        <button class="qty-btn" data-index="{{index}}" bindtap="increment">+</button>
+      </view>
+      <text class="delete-btn" data-index="{{index}}" bindtap="removeItem">✕</text>
+    </view>
+  </view>
+
+  <!-- 空购物车 -->
+  <view class="empty" wx:else>
+    <text class="empty-icon">🛒</text>
+    <text>购物车是空的</text>
+    <button class="goto-menu-btn" bindtap="goToMenu">去点餐</button>
+  </view>
+
+  <!-- 底部结算栏 -->
+  <view class="fixed-bottom" wx:if="{{cartItems.length > 0}}">
+    <view class="total-info">
+      <text class="total-label">合计: </text>
+      <text class="total-price">{{totalPriceText}}</text>
+    </view>
+    <button class="checkout-btn" bindtap="goToCheckout">去结算</button>
+  </view>
+</view>

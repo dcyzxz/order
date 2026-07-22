@@ -1,0 +1,58 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/menu/menu",
+    "pages/menu/detail/detail",
+    "pages/cart/cart",
+    "pages/orders/orders",
+    "pages/orders/detail/detail",
+    "pages/orders/create/create",
+    "pages/admin/index",
+    "pages/admin/dishes/dishes",
+    "pages/admin/pending/pending",
+    "pages/admin/orders/orders",
+    "pages/admin/materials/materials"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "点菜小程序",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8",
+    "enablePullDownRefresh": true
+  },
+  "tabBar": {
+    "color": "#7A7E83",
+    "selectedColor": "#07C160",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "iconPath": "images/home.png",
+        "selectedIconPath": "images/home-active.png",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/menu/menu",
+        "iconPath": "images/menu.png",
+        "selectedIconPath": "images/menu-active.png",
+        "text": "菜单"
+      },
+      {
+        "pagePath": "pages/cart/cart",
+        "iconPath": "images/cart.png",
+        "selectedIconPath": "images/cart-active.png",
+        "text": "购物车"
+      },
+      {
+        "pagePath": "pages/orders/orders",
+        "iconPath": "images/orders.png",
+        "selectedIconPath": "images/orders-active.png",
+        "text": "订单"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

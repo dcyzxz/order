@@ -1,0 +1,60 @@
+<view class="container">
+  <!-- 分类栏 -->
+  <scroll-view class="category-bar" scroll-x enable-flex>
+    <view
+      class="category-tab {{activeCategory === null ? 'active' : ''}}"
+      data-id="null"
+      bindtap="switchCategory"
+    >全部</view>
+    <view
+      class="category-tab {{activeCategory === item.id ? 'active' : ''}}"
+      wx:for="{{categories}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="switchCategory"
+    >{{item.name}}</view>
+  </scroll-view>
+
+  <!-- 搜索 -->
+  <view class="search-bar">
+    <input class="search-input" placeholder="搜索菜品..." value="{{keyword}}" bindinput="onKeywordInput" bindconfirm="searchDishes" confirm-type="search" />
+    <text class="search-btn" bindtap="searchDishes">搜索</text>
+  </view>
+
+  <!-- 菜品列表 -->
+  <view class="dish-list" wx:if="{{dishes.length > 0}}">
+    <view
+      class="dish-item"
+      wx:for="{{dishes}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="goToDetail"
+    >
+      <image class="dish-image" src="{{item.imageUrl || '/images/dish-placeholder.png'}}" mode="aspectFill" />
+      <view class="dish-content">
+        <text class="dish-name">{{item.name}}</text>
+        <text class="dish-category" wx:if="{{item.categoryName}}">{{item.categoryName}}</text>
+        <view class="dish-footer">
+          <text class="dish-price">¥{{item.price}}</text>
+          <text class="dish-sales" wx:if="{{item.salesCount > 0}}">已售 {{item.salesCount}}</text>
+        </view>
+        <view class="dish-tags">
+          <text class="tag" wx:if="{{item.isRecommended}}">推荐</text>
+        </view>
+      </view>
+      <view class="add-btn" data-item="{{item}}" bindtap="addToCart">+</view>
+    </view>
+  </view>
+
+  <!-- 加载更多 -->
+  <view class="loading" wx:if="{{loading}}">加载中...</view>
+
+  <!-- 没有更多 -->
+  <view class="loading" wx:if="{{!hasMore && dishes.length > 0}}">— 没有更多了 —</view>
+
+  <!-- 空状态 -->
+  <view class="empty" wx:if="{{dishes.length === 0 && !loading}}">
+    <text class="empty-icon">🍽️</text>
+    <text>暂无菜品</text>
+  </view>
+</view>

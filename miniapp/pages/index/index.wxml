@@ -1,0 +1,96 @@
+<view class="container">
+  <!-- 用户信息栏 -->
+  <view class="user-card card" bindtap="handleLogin">
+    <open-data type="userAvatarUrl" class="avatar" wx:if="{{hasUserInfo}}"></open-data>
+    <image wx:else class="avatar" src="/images/avatar-placeholder.png"></image>
+    <view class="user-info">
+      <text class="nickname">{{userInfo.nickname || '点击登录'}}</text>
+      <text class="admin-badge" wx:if="{{userInfo.is_admin}}">管理员</text>
+    </view>
+    <text class="arrow">›</text>
+  </view>
+
+  <!-- 搜索入口 -->
+  <view class="search-section" bindtap="goToMenu">
+    <view class="search-bar">
+      <text class="search-icon">🔍</text>
+      <text class="search-placeholder">搜索菜品...</text>
+    </view>
+  </view>
+
+  <!-- 推荐菜品 -->
+  <view class="section" wx:if="{{recommendedDishes.length > 0}}">
+    <view class="section-header">
+      <text class="section-title">🔥 推荐菜品</text>
+      <text class="section-more" bindtap="goToMenu">查看更多 ›</text>
+    </view>
+    <scroll-view class="dish-scroll" scroll-x>
+      <view
+        class="dish-card"
+        wx:for="{{recommendedDishes}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="goToDetail"
+      >
+        <image class="dish-image" src="{{item.imageUrl || '/images/dish-placeholder.png'}}" mode="aspectFill" />
+        <view class="dish-info">
+          <text class="dish-name">{{item.name}}</text>
+          <text class="dish-price">¥{{item.price}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 分类入口 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">📂 菜品分类</text>
+    </view>
+    <view class="category-grid">
+      <view
+        class="category-item"
+        wx:for="{{categories}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="goToCategory"
+      >
+        <text class="category-icon">🍽️</text>
+        <text class="category-name">{{item.name}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 待定价提交入口 -->
+  <view class="section card pending-entry" wx:if="{{isLoggedIn}}" bindtap="showPendingDialog">
+    <text class="pending-icon">📝</text>
+    <view class="pending-text">
+      <text class="pending-title">没有想吃的菜？</text>
+      <text class="pending-desc">提交你想吃的菜，管理员审核上架</text>
+    </view>
+    <text class="pending-arrow">›</text>
+  </view>
+
+  <!-- 管理后台入口 -->
+  <view class="section card admin-entry" wx:if="{{isAdmin}}" bindtap="goToAdmin">
+    <text class="pending-icon">⚙️</text>
+    <view class="pending-text">
+      <text class="pending-title">管理后台</text>
+      <text class="pending-desc">菜品、订单、定价管理</text>
+    </view>
+    <text class="pending-arrow">›</text>
+  </view>
+</view>
+
+<!-- 待定价弹窗 -->
+<view class="modal-mask" wx:if="{{showPendingModal}}" bindtap="closePendingDialog">
+  <view class="modal-dialog" catchtap="stopPropagation">
+    <text class="modal-title">提交新菜品</text>
+    <input class="modal-input" placeholder="菜品名称" value="{{pendingForm.name}}" bindinput="onPendingNameInput" />
+    <input class="modal-input" placeholder="菜品描述（选填）" value="{{pendingForm.description}}" bindinput="onPendingDescInput" />
+    <input class="modal-input" placeholder="建议价格（选填）" value="{{pendingForm.price}}" bindinput="onPendingPriceInput" type="digit" />
+    <view class="modal-actions">
+      <button class="btn-cancel" bindtap="closePendingDialog">取消</button>
+      <button class="btn-submit" bindtap="submitPendingDish">提交</button>
+    </view>
+  </view>
+</view>

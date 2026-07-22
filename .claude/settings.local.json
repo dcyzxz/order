@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ssh *)",
+      "Bash(pacman -S --noconfirm sshpass)",
+      "Bash(ssh-keygen -t ed25519 -f ~/.ssh/order_deploy_key -N \"\" -q)",
+      "Read(//c/Users/dcyzx/.ssh/**)",
+      "Bash(tar czf *)",
+      "Bash(scp *)",
+      "Bash(npm install *)",
+      "Bash(tcb login *)",
+      "Bash(tcb env:list *)",
+      "Bash(tcb *)",
+      "Bash(pip install *)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(python -m pytest tests/ --tb=short -v)",
+      "Bash(python *)",
+      "Bash(docker --version)",
+      "Bash(docker info *)",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git remote *)",
+      "Bash(git push *)"
+    ]
+  }
+}

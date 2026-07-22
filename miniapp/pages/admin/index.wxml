@@ -1,0 +1,47 @@
+<view class="container">
+  <view class="admin-header">
+    <text class="admin-title">管理后台</text>
+    <text class="admin-subtitle">菜品 / 订单 / 定价管理</text>
+  </view>
+
+  <view class="menu-grid">
+    <view class="menu-item" bindtap="goToPage" data-url="/pages/admin/dishes/dishes">
+      <text class="menu-icon">🍽️</text>
+      <text class="menu-label">菜品管理</text>
+      <text class="menu-desc">上架、下架、编辑菜品</text>
+    </view>
+    <view class="menu-item" bindtap="goToPage" data-url="/pages/admin/pending/pending">
+      <text class="menu-icon">⏳</text>
+      <text class="menu-label">待定价审核</text>
+      <text class="menu-desc">审核用户提交的新菜品</text>
+    </view>
+    <view class="menu-item" bindtap="goToPage" data-url="/pages/admin/orders/orders">
+      <text class="menu-icon">📋</text>
+      <text class="menu-label">订单管理</text>
+      <text class="menu-desc">查看和处理订单</text>
+    </view>
+    <view class="menu-item" bindtap="goToPage" data-url="/pages/admin/materials/materials">
+      <text class="menu-icon">🥬</text>
+      <text class="menu-label">材料管理</text>
+      <text class="menu-desc">管理菜品材料清单</text>
+    </view>
+  </view>
+
+  <view class="stats-section card" wx:if="{{stats}}">
+    <text class="stats-title">📊 快捷统计</text>
+    <view class="stats-grid">
+      <view class="stat-item">
+        <text class="stat-value">{{stats.pendingCount}}</text>
+        <text class="stat-label">待审核</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{stats.activeDishCount}}</text>
+        <text class="stat-label">在售菜品</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{stats.pendingOrderCount}}</text>
+        <text class="stat-label">待处理订单</text>
+      </view>
+    </view>
+  </view>
+</view>

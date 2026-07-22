@@ -1,0 +1,172 @@
+.container {
+  padding-bottom: 120rpx;
+}
+
+.dish-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dish-image {
+  width: 300rpx;
+  height: 240rpx;
+  border-radius: 12rpx;
+  background: #f0f0f0;
+}
+
+.dish-name {
+  font-size: 36rpx;
+  font-weight: 600;
+  margin-top: 20rpx;
+}
+
+.dish-price {
+  font-size: 36rpx;
+  color: #f56c6c;
+  font-weight: 600;
+  margin-top: 10rpx;
+}
+
+.dish-desc {
+  font-size: 26rpx;
+  color: #666;
+  margin-top: 10rpx;
+  text-align: center;
+}
+
+.dish-tags {
+  display: flex;
+  gap: 8rpx;
+  margin-top: 16rpx;
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.section-hint {
+  font-size: 22rpx;
+  color: #999;
+  margin-left: 10rpx;
+}
+
+.material-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.material-item {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 16rpx;
+  background: #f9f9f9;
+  border-radius: 8rpx;
+  width: calc(50% - 8rpx);
+  box-sizing: border-box;
+  font-size: 26rpx;
+}
+
+.material-name {
+  margin-left: 8rpx;
+}
+
+.material-name.allergen {
+  color: #f56c6c;
+}
+
+.material-category {
+  font-size: 20rpx;
+  color: #999;
+  margin-left: 8rpx;
+}
+
+.allergen-tag {
+  font-size: 18rpx;
+  color: #f56c6c;
+  background: #fef0f0;
+  padding: 2rpx 8rpx;
+  border-radius: 4rpx;
+  margin-left: auto;
+}
+
+.selected-info {
+  margin-top: 16rpx;
+  padding: 10rpx;
+  background: #f0f9eb;
+  border-radius: 8rpx;
+}
+
+.info-text {
+  font-size: 24rpx;
+  color: #67c23a;
+}
+
+.quantity-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.quantity-label {
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.qty-btn {
+  width: 56rpx;
+  height: 56rpx;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333;
+  line-height: 56rpx;
+  text-align: center;
+  padding: 0;
+}
+
+.qty-value {
+  font-size: 36rpx;
+  font-weight: 500;
+  min-width: 60rpx;
+  text-align: center;
+}
+
+.total-info {
+  padding-left: 10rpx;
+}
+
+.total-price {
+  font-size: 36rpx;
+  color: #f56c6c;
+  font-weight: 600;
+}
+
+.add-cart-btn {
+  background: #07c160;
+  color: #fff;
+  border: none;
+  border-radius: 44rpx;
+  padding: 16rpx 60rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+}

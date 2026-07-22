@@ -1,0 +1,42 @@
+<view class="container">
+  <!-- 状态筛选 -->
+  <view class="filter-bar">
+    <view class="filter-tab {{filterStatus === null ? 'active' : ''}}" bindtap="onFilterChange" data-status="{{null}}">全部</view>
+    <view class="filter-tab {{filterStatus === 'pending_price' ? 'active' : ''}}" bindtap="onFilterChange" data-status="pending_price">待定价</view>
+    <view class="filter-tab {{filterStatus === 'approved' ? 'active' : ''}}" bindtap="onFilterChange" data-status="approved">已通过</view>
+    <view class="filter-tab {{filterStatus === 'rejected' ? 'active' : ''}}" bindtap="onFilterChange" data-status="rejected">已驳回</view>
+  </view>
+
+  <view class="pending-list">
+    <view class="pending-item card" wx:for="{{pendingList}}" wx:key="id">
+      <view class="pending-header">
+        <text class="pending-name">{{item.name}}</text>
+        <text class="pending-status status-{{item.status}}">{{statusText(item.status)}}</text>
+      </view>
+      <text class="pending-user" wx:if="{{item.userName}}">提交者: {{item.userName}}</text>
+      <text class="pending-desc" wx:if="{{item.description}}">{{item.description}}</text>
+      <text class="pending-price" wx:if="{{item.suggestedPrice}}">建议价: ¥{{item.suggestedPrice}}</text>
+      <view class="pending-actions" wx:if="{{item.status === 'pending_price'}}">
+        <button class="action-btn reject" bindtap="reviewReject" data-id="{{item.id}}">驳回</button>
+        <button class="action-btn approve" bindtap="showReviewDialog" data-id="{{item.id}}" data-name="{{item.name}}">审核通过</button>
+      </view>
+    </view>
+  </view>
+  <view class="loading" wx:if="{{loading}}">加载中...</view>
+</view>
+
+<!-- 审核弹窗 -->
+<view class="modal-mask" wx:if="{{showReviewModal}}" bindtap="closeReview">
+  <view class="modal-dialog" catchtap="stopPropagation">
+    <text class="modal-title">审核: {{reviewName}}</text>
+    <input class="modal-input" placeholder="定价（必填）" type="digit" value="{{reviewForm.price}}" bindinput="onReviewPriceInput" />
+    <textarea class="modal-textarea" placeholder="审核备注（选填）" value="{{reviewForm.note}}" bindinput="onReviewNoteInput"></textarea>
+    <picker mode="selector" range="{{categories}}" range-key="name" bindchange="onReviewCategoryChange">
+      <view class="modal-picker">{{reviewForm.categoryName || '选择分类（选填）'}}</view>
+    </picker>
+    <view class="modal-actions">
+      <button class="btn-cancel" bindtap="closeReview">取消</button>
+      <button class="btn-submit" bindtap="submitReview">确认通过</button>
+    </view>
+  </view>
+</view>

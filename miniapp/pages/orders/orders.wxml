@@ -1,0 +1,66 @@
+<view class="container">
+  <!-- 状态切换 -->
+  <view class="status-tabs">
+    <view
+      class="status-tab {{activeStatus === null ? 'active' : ''}}"
+      data-status="null"
+      bindtap="switchStatus"
+    >全部</view>
+    <view
+      class="status-tab {{activeStatus === 'pending' ? 'active' : ''}}"
+      data-status="pending"
+      bindtap="switchStatus"
+    >待处理</view>
+    <view
+      class="status-tab {{activeStatus === 'confirmed' ? 'active' : ''}}"
+      data-status="confirmed"
+      bindtap="switchStatus"
+    >已确认</view>
+    <view
+      class="status-tab {{activeStatus === 'preparing' ? 'active' : ''}}"
+      data-status="preparing"
+      bindtap="switchStatus"
+    >制作中</view>
+    <view
+      class="status-tab {{activeStatus === 'completed' ? 'active' : ''}}"
+      data-status="completed"
+      bindtap="switchStatus"
+    >已完成</view>
+    <view
+      class="status-tab {{activeStatus === 'cancelled' ? 'active' : ''}}"
+      data-status="cancelled"
+      bindtap="switchStatus"
+    >已取消</view>
+  </view>
+
+  <!-- 订单列表 -->
+  <view class="order-list" wx:if="{{orders.length > 0}}">
+    <view
+      class="order-item card"
+      wx:for="{{orders}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="goToDetail"
+    >
+      <view class="order-header">
+        <text class="order-no">{{item.orderNo}}</text>
+        <text class="order-status status-{{item.status}}">{{statusText(item.status)}}</text>
+      </view>
+      <view class="order-body">
+        <text class="order-count">{{item.itemCount}} 道菜</text>
+        <text class="order-total">¥{{item.totalPrice}}</text>
+      </view>
+      <view class="order-footer">
+        <text class="order-time">{{item.createdAt}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">加载中...</view>
+  <view class="loading" wx:if="{{!hasMore && orders.length > 0}}">— 没有更多了 —</view>
+
+  <view class="empty" wx:if="{{orders.length === 0 && !loading}}">
+    <text class="empty-icon">📋</text>
+    <text>暂无订单</text>
+  </view>
+</view>
