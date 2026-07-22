@@ -636,12 +636,22 @@ function renderAdminDishes() {
           <button class="btn btn-small ${d.status === 'active' ? 'btn-danger' : 'btn-primary'}" onclick="toggleDishStatus(${d.id}, '${d.status}')" style="font-size:12px">
             ${d.status === 'active' ? '下架' : '上架'}
           </button>
+          ${window._isAdmin ? `<button class="btn btn-small btn-outline" style="color:var(--red);border-color:var(--red);font-size:12px" onclick="adminDeleteDish(${d.id})">删除</button>` : ''}
         </div>
       </div>
     </div>
   `).join(''));
 }
 
+
+async function adminDeleteDish(id) {
+  if (!confirm('确定要删除此菜品吗？')) return;
+  try {
+    await api('/admin/dishes/' + id, { method: 'DELETE' });
+    toast('菜品已删除');
+    loadAdminDishes();
+  } catch (e) { toast('删除失败'); }
+}
 
 async function toggleDishStatus(id, status) {
   try {

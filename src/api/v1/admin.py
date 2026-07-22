@@ -253,6 +253,24 @@ async def update_dish(
     return success(data=DishOut.model_validate(dish), message="菜品更新成功")
 
 
+@router.delete("/dishes/{dish_id}")
+async def delete_dish(
+    dish_id: int,
+    staff: User = Depends(get_staff_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """删除菜品（管理员/厨师）. """
+    result = await db.execute(
+        select(Dish).where(Dish.id == dish_id).options(selectinload(Dish.materials))
+    )
+    dish = result.scalar_one_or_none()
+    if dish is None:
+        raise NotFoundError(message="菜品不存在")
+    await db.delete(dish)
+    await db.flush()
+    return success(message="菜品已删除")
+
+
 @router.get("/dishes")
 async def admin_list_dishes(
     status: str | None = Query(None, pattern=r"^(active|inactive|pending_price)$"),
