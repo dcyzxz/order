@@ -107,6 +107,12 @@ async def get_dish_detail(
         select(DishCategory).where(DishCategory.dish_id == dish_id)
     )
     cat_ids = [dc.category_id for dc in cat_result.scalars().all()]
+    cat_names = []
+    if cat_ids:
+        cat_name_result = await db.execute(
+            select(Category).where(Category.id.in_(cat_ids))
+        )
+        cat_names = [c.name for c in cat_name_result.scalars().all()]
 
     return success(data=DishOut(
         id=dish.id,
@@ -117,6 +123,7 @@ async def get_dish_detail(
         category_id=dish.category_id,
         category_name=dish.category.name if dish.category else None,
         category_ids=cat_ids,
+        category_names=cat_names,
         status=dish.status,
         is_recommended=dish.is_recommended,
         sales_count=dish.sales_count,

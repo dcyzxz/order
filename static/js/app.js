@@ -688,7 +688,7 @@ function renderAdminDishes() {
             </div>
             <span style="color:var(--red);font-weight:600;flex-shrink:0">${d.price !== null ? '¥' + d.price : '待定价'}</span>
           </div>
-          <div class="text-secondary" style="font-size:13px;margin-top:4px">${d.category_name || '未分类'}</div>
+          <div class="text-secondary" style="font-size:13px;margin-top:4px">${(d.category_names && d.category_names.length ? d.category_names.join('、') : d.category_name) || '未分类'}</div>
         <div style="display:flex;gap:6px">
           <button class="btn btn-small btn-outline" onclick="showAdminDishModal(${d.id})" style="font-size:12px">编辑</button>
           <button class="btn btn-small ${d.status === 'active' ? 'btn-danger' : 'btn-primary'}" onclick="toggleDishStatus(${d.id}, '${d.status}')" style="font-size:12px">

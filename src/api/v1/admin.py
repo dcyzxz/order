@@ -379,8 +379,14 @@ async def admin_list_dishes(
             select(DishCategory).where(DishCategory.dish_id.in_(dish_ids))
         )).scalars().all()
     cat_map = {}
+    cat_name_map = {}
     for row in cat_rows:
         cat_map.setdefault(row.dish_id, []).append(row.category_id)
+    # Get category names
+    all_cat_ids = list(set(cid for ids in cat_map.values() for cid in ids))
+    if all_cat_ids:
+        cat_name_rows = await db.execute(select(Category).where(Category.id.in_(all_cat_ids)))
+        cat_name_map = {c.id: c.name for c in cat_name_rows.scalars().all()}
 
     items = []
     for d in dishes:
@@ -397,6 +403,7 @@ async def admin_list_dishes(
             is_recommended=d.is_recommended,
             sales_count=d.sales_count,
             category_ids=cat_ids,
+            category_names=[cat_name_map.get(cid, "") for cid in cat_ids],
             materials=[MaterialOut.model_validate(m) for m in (d.materials or [])],
             created_at=d.created_at,
         ))

@@ -43,6 +43,7 @@ class DishOut(BaseModel):
     category_id: int | None = None
     category_name: str | None = None
     category_ids: list[int] = Field(default_factory=list)
+    category_names: list[str] = Field(default_factory=list)
     status: str = "active"
     is_recommended: bool = False
     sales_count: int = 0
