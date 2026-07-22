@@ -340,40 +340,59 @@ function addDetailToCart() {
   toast('已加入购物车');
 }
 
-// Cart
 function renderCart() {
   const items = getCart();
-  const list = document.getElementById('cart-list');
-  const total = items.reduce((s, i) => s + (i.price || 0) * i.quantity, 0);
+  const container = document.getElementById('cart-list');
+  const bar = document.getElementById('cart-bottom-bar');
+  const totalEl = document.getElementById('cart-total');
+  if (!container || !bar || !totalEl) return;
 
-  document.getElementById('cart-total').textContent = '¥' + total.toFixed(2);
-
-  if (items.length === 0) {
-    list.innerHTML = '<div class="cart-empty"><div class="empty-icon">🛒</div><div>购物车是空的</div></div>';
-    document.getElementById('cart-bottom-bar').style.display = 'none';
+  if (!items || items.length === 0) {
+    container.innerHTML = '<div class="cart-empty"><div class="empty-icon">🛒</div><div>购物车是空的</div><button class="btn btn-primary mt-16" onclick="showPage(\'menu-page\')">去点餐</button></div>';
+    bar.style.display = 'none';
     return;
   }
-  document.getElementById('cart-bottom-bar').style.display = 'flex';
-  list.innerHTML = items.map((item, idx) => `
-    <div class="cart-item">
-      <div class="ci-info">
-        <div class="ci-name">${item.dishName}</div>
-        ${item.excludedMaterialIds.length ? '<div class="ci-excluded">忌口: ' + item.excludedMaterialIds.length + '项</div>' : ''}
-      </div>
-      <div class="ci-price">¥${((item.price || 0) * item.quantity).toFixed(2)}</div>
-      <div class="ci-qty">
-        <button class="qty-btn" onclick="cartChangeQty(${idx}, -1)" ${item.quantity <= 1 ? 'disabled' : ''}>−</button>
-        <span>${item.quantity}</span>
-        <button class="qty-btn" onclick="cartChangeQty(${idx}, 1)">+</button>
-      </div>
-    </div>
-  `).join('');
+
+  bar.style.display = 'flex';
+
+  let html = '';
+  let total = 0;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const sub = (item.price || 0) * item.quantity;
+    total += sub;
+    html += '<div class="card" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:8px">';
+    html += '  <div style="flex:1;min-width:0">';
+    html += '    <div style="font-weight:600;font-size:15px">' + item.dishName + '</div>';
+    if (item.excludedMaterialIds && item.excludedMaterialIds.length) {
+      html += '    <div style="font-size:12px;color:var(--text-secondary)">忌口: ' + item.excludedMaterialIds.length + '项</div>';
+    }
+    html += '    <div style="color:var(--red);font-weight:600;font-size:15px;margin-top:2px">¥' + sub.toFixed(2) + '</div>';
+    html += '  </div>';
+    html += '  <div style="display:flex;align-items:center;gap:8px">';
+    html += '    <button class="qty-btn" onclick="cartChangeQty(' + i + ',-1)" style="width:32px;height:32px;font-size:18px" ' + (item.quantity <= 1 ? 'disabled' : '') + '>−</button>';
+    html += '    <span style="font-size:16px;font-weight:600;min-width:24px;text-align:center">' + item.quantity + '</span>';
+    html += '    <button class="qty-btn" onclick="cartChangeQty(' + i + ',1)" style="width:32px;height:32px;font-size:18px">+</button>';
+    html += '    <button class="qty-btn" onclick="cartRemoveItem(' + i + ')" style="width:32px;height:32px;font-size:16px;color:var(--red);border-color:var(--red)">✕</button>';
+    html += '  </div>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+  totalEl.textContent = '¥' + total.toFixed(2);
 }
 
 function cartChangeQty(idx, delta) {
   const cart = getCart();
   cart[idx].quantity += delta;
   if (cart[idx].quantity <= 0) cart.splice(idx, 1);
+  setCart(cart);
+  updateCartBadge();
+  renderCart();
+}
+
+function cartRemoveItem(idx) {
+  const cart = getCart();
+  cart.splice(idx, 1);
   setCart(cart);
   updateCartBadge();
   renderCart();

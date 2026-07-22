@@ -26,12 +26,20 @@
 
   <!-- ==================== Cart Page ==================== -->
   <div class="page" id="cart-page">
-    <div class="container">
-      <div id="cart-list"></div>
+    <div class="container" id="cart-container">
+      <div id="cart-list">
+        <div class="cart-empty">
+          <div class="empty-icon">🛒</div>
+          <div>购物车是空的</div>
+          <button class="btn btn-primary mt-16" onclick="showPage('menu-page')">去点餐</button>
+        </div>
+      </div>
     </div>
-    <div class="cart-bottom" id="cart-bottom-bar" style="display:none">
-      <div class="cart-total">合计: <span id="cart-total">¥0.00</span></div>
-      <button class="btn btn-primary" onclick="showOrderConfirm()">去结算</button>
+    <div class="fixed-bottom" id="cart-bottom-bar" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;width:100%">
+        <div class="cart-total">合计: <span id="cart-total" style="color:var(--red);font-size:20px;font-weight:700">¥0.00</span></div>
+        <button class="btn btn-primary" onclick="showOrderConfirm()" style="margin-left:auto">去结算</button>
+      </div>
     </div>
   </div>
 
