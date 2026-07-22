@@ -245,7 +245,7 @@ async def create_dish(
     await db.flush()
 
     # 重新查询以加载关系
-    await db.refresh(dish, ["materials", "category"])
+    await db.refresh(dish, ["materials", "category", "categories"])
     return success(data=DishOut.model_validate(dish), message="菜品创建成功")
 
 

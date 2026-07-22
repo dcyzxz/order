@@ -610,7 +610,7 @@ async function loadAdminDishes() {
     renderAdminDishes();
     const catRes = await adminApi.getCategories();
     window._adminCategories = catRes.data || [];
-  } catch (e) { console.error(e); }
+  } catch (e) { console.error(e); toast('加载失败: ' + e.message); }
 }
 
 function searchAdminDishes() {
@@ -1279,75 +1279,98 @@ function switchAdminTab(tab) {
   if (tab === 'materials') loadAdminMaterials();
 }
 
-// ==================== Recommend ====================
-const _greetings = ['今天想吃点什么？', '让我帮你选！', '看看今天的推荐吧 🎯', '不知道吃啥？交给我！', '又到饭点啦 🍚'];
-const _foodEmojis = ['🥩', '🥬', '🥘', '🍜', '🍛', '🥗', '🌮', '🍕', '🍣', '🥟'];
+// ==================== AI Chat ====================
+const _chatFoodEmojis = ['🥩', '🥬', '🥘', '🍜', '🍛', '🥗', '🌮', '🍕', '🍣', '🥟'];
 
 async function loadRecommend() {
   const token = localStorage.getItem('token');
+  const chatBox = document.getElementById('chat-messages');
+  if (!chatBox) return;
+
+  chatBox.innerHTML = '';
   if (!token) {
-    document.getElementById('recommend-loading').innerHTML = '<div style="padding:60px 0;color:var(--text-secondary)">请先登录获取个性化推荐 🤖</div>';
-    document.getElementById('recommend-content').style.display = 'none';
+    addChatBubble('bot', '👋 请先登录，我才能根据你的口味推荐菜品哦！');
     return;
   }
-  document.getElementById('recommend-loading').style.display = '';
-  document.getElementById('recommend-content').style.display = 'none';
-
-  try {
-    const [recRes, allRes] = await Promise.all([
-      recommendApi.get(),
-      menuApi.getDishes({ page_size: 100, recommended: true }),
-    ]);
-
-    document.getElementById('recommend-loading').style.display = 'none';
-    document.getElementById('recommend-content').style.display = '';
-
-    const greeting = _greetings[Math.floor(Math.random() * _greetings.length)];
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    document.getElementById('recommend-greeting').textContent = (user.nickname || '朋友') + '，' + greeting;
-
-    let dishes = recRes.data?.dishes || [];
-    // If no personalized recs, show recommended dishes
-    if (dishes.length === 0 && allRes.data?.items) {
-      dishes = allRes.data.items.slice(0, 10);
-    }
-
-    renderRecommendDishes(dishes);
-  } catch (e) {
-    document.getElementById('recommend-loading').innerHTML = '<div style="padding:60px 0;color:var(--text-secondary)">加载失败，请稍后再试</div>';
-  }
+  // Initial greeting
+  addChatBubble('bot', '你好呀！我是你的智能点餐助手 🤖\n\n告诉我你想吃什么，比如：\n• "推荐" — 我帮你选\n• "想吃肉/海鲜/辣的" — 按口味推荐\n• "随便吃点" — 随机推荐');
 }
 
-function renderRecommendDishes(dishes) {
-  const el = document.getElementById('recommend-list');
-  if (!dishes || dishes.length === 0) {
-    el.innerHTML = '<div class="text-center text-secondary" style="padding:40px">暂无推荐菜品</div>';
-    return;
+function addChatBubble(role, text, dishes) {
+  const chatBox = document.getElementById('chat-messages');
+  const bubble = document.createElement('div');
+  bubble.style.marginBottom = '16px';
+  bubble.style.display = 'flex';
+  bubble.style.flexDirection = 'column';
+  bubble.style.alignItems = role === 'bot' ? 'flex-start' : 'flex-end';
+
+  const content = document.createElement('div');
+  content.style.maxWidth = '85%';
+  content.style.padding = '12px 16px';
+  content.style.borderRadius = '16px';
+  content.style.fontSize = '14px';
+  content.style.lineHeight = '1.6';
+  content.style.whiteSpace = 'pre-wrap';
+
+  if (role === 'bot') {
+    content.style.background = '#fff';
+    content.style.border = '1px solid #e8e8e8';
+    content.style.borderBottomLeftRadius = '4px';
+  } else {
+    content.style.background = 'var(--green)';
+    content.style.color = '#fff';
+    content.style.borderBottomRightRadius = '4px';
   }
-  el.innerHTML = '<div style="font-weight:600;font-size:15px;margin-bottom:12px">🎯 为你推荐</div>' +
-    dishes.map(d => `
-    <div class="dish-card" onclick="showDishDetail(${d.id})" style="margin-bottom:10px">
-      <div class="dish-img" style="width:72px;height:72px;font-size:28px">${_foodEmojis[d.id % _foodEmojis.length]}</div>
-      <div class="dish-info">
-        <div class="dish-name" style="font-size:14px">${d.name}</div>
-        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${d.category_name || ''}</div>
-        <div class="dish-footer" style="margin-top:6px">
-          <div class="dish-price" style="font-size:16px">${d.price !== null ? '¥' + d.price : '待定价'}</div>
+  content.textContent = text;
+  bubble.appendChild(content);
+
+  // Show dish cards if any
+  if (dishes && dishes.length) {
+    const dishContainer = document.createElement('div');
+    dishContainer.style.marginTop = '8px';
+    dishContainer.style.width = '100%';
+    dishes.forEach(d => {
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#fff;border:1px solid #eee;border-radius:12px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer';
+      card.onclick = () => showDishDetail(d.id);
+      card.innerHTML = `
+        <span style="font-size:24px">${_chatFoodEmojis[d.id % _chatFoodEmojis.length]}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px">${d.name}</div>
+          <div style="font-size:12px;color:#999">${d.category_name || ''} · ¥${d.price || '?'}</div>
         </div>
-      </div>
-      <button class="add-cart-btn" onclick="event.stopPropagation(); quickAdd(${d.id})" style="width:26px;height:26px;font-size:16px">+</button>
-    </div>
-  `).join('');
+        <button style="background:var(--green);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;flex-shrink:0" onclick="event.stopPropagation();quickAdd(${d.id})">+</button>
+      `;
+      dishContainer.appendChild(card);
+    });
+    bubble.appendChild(dishContainer);
+  }
+
+  chatBox.appendChild(bubble);
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-async function getRandomPick() {
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  addChatBubble('user', msg);
+  addChatBubble('bot', '🤔 思考中...');
+
   try {
-    const res = await recommendApi.random();
-    const dishes = res.data?.dishes || [];
-    if (!dishes.length) { toast('暂无菜品'); return; }
-    renderRecommendDishes(dishes);
-    document.getElementById('recommend-greeting').textContent = '🎲 随机推荐，试试这些！';
-  } catch (e) { toast('获取失败'); }
+    const res = await api('/recommend/chat', { method: 'POST', data: { message: msg } });
+    // Remove thinking bubble
+    const chatBox = document.getElementById('chat-messages');
+    if (chatBox.lastChild) chatBox.removeChild(chatBox.lastChild);
+
+    addChatBubble('bot', res.data.reply, res.data.dishes);
+  } catch (e) {
+    const chatBox = document.getElementById('chat-messages');
+    if (chatBox.lastChild) chatBox.removeChild(chatBox.lastChild);
+    addChatBubble('bot', '😅 出了点小问题，稍后再试试吧');
+  }
 }
 
 // ==================== Init ====================

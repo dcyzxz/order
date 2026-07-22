@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from src.schemas.material import MaterialOut
 
@@ -42,15 +42,29 @@ class DishOut(BaseModel):
     image_url: str | None = None
     category_id: int | None = None
     category_name: str | None = None
-    category_ids: list[int] = []
-    category_names: list[str] = []
+    category_ids: list[int] = Field(default_factory=list)
+    category_names: list[str] = Field(default_factory=list)
     status: str = "active"
     is_recommended: bool = False
     sales_count: int = 0
-    materials: list[MaterialOut] = []
+    materials: list[MaterialOut] = Field(default_factory=list)
     created_at: datetime | None = None
 
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="before")
+    @classmethod
+    def populate_categories(cls, data):
+        if isinstance(data, dict):
+            return data
+        # 从 ORM 对象中提取多分类信息
+        if hasattr(data, "categories") and data.categories:
+            data.category_ids = [c.id for c in data.categories]
+            data.category_names = [c.name for c in data.categories]
+        else:
+            data.category_ids = data.category_ids if hasattr(data, "category_ids") else []
+            data.category_names = data.category_names if hasattr(data, "category_names") else []
+        return data
 
 
 class DishList(BaseModel):

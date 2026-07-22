@@ -16,22 +16,13 @@
     <button class="header-action" id="header-action" onclick="logout()" style="display:none">退出</button>
   </div>
 
-  <!-- ==================== Recommend Page ==================== -->
+  <!-- ==================== Recommend Page (Chat) ==================== -->
   <div class="page" id="recommend-page">
-    <div class="container">
-      <div id="recommend-loading" style="text-align:center;padding:60px 0;color:var(--text-secondary)">🤖 智能推荐分析中...</div>
-      <div id="recommend-content" style="display:none">
-        <div class="card" style="text-align:center;background:linear-gradient(135deg,#f0f9eb,#e8f5e9);margin-bottom:16px">
-          <div style="font-size:40px;margin-bottom:8px">🤖</div>
-          <div style="font-size:18px;font-weight:600;color:var(--green)">智能推荐助手</div>
-          <div style="font-size:13px;color:#666;margin-top:4px" id="recommend-greeting"></div>
-        </div>
-
-        <div id="recommend-list"></div>
-
-        <button class="btn btn-outline btn-block mt-16" onclick="getRandomPick()" style="display:flex;align-items:center;justify-content:center;gap:8px">
-          <span>🎲</span> 随便吃点
-        </button>
+    <div style="display:flex;flex-direction:column;height:calc(100vh - 100px)">
+      <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px;padding-bottom:8px"></div>
+      <div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid #eee;background:#fff">
+        <input class="form-input" id="chat-input" placeholder="跟AI助手说你想吃什么..." style="flex:1;border-radius:20px" onkeydown="if(event.key==='Enter') sendChat()">
+        <button class="btn btn-primary" onclick="sendChat()" style="border-radius:50%;width:44px;height:44px;padding:0;font-size:18px">➤</button>
       </div>
     </div>
   </div>
