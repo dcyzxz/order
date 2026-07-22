@@ -1363,10 +1363,20 @@ function switchAdminTab(tab) {
 
 // ==================== Profile ====================
 async function initProfile() {
-  updateUserUI();
-  const { token, user } = await checkLogin();
+  const token = localStorage.getItem('token');
   const loggedIn = !!token;
   document.getElementById('logout-btn').style.display = loggedIn ? '' : 'none';
+
+  // 从服务器刷新用户数据
+  if (loggedIn) {
+    try {
+      const res = await userApi.getProfile();
+      localStorage.setItem('user', JSON.stringify(res.data));
+    } catch (e) { console.error('profile reload fail', e); }
+  }
+
+  updateUserUI();
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
   document.getElementById('admin-entry-btn').style.display = user && (user.role === 'admin' || user.role === 'chef') ? '' : 'none';
 }
 
