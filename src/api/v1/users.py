@@ -14,11 +14,11 @@ from src.schemas.user import UserUpdate, UserOut, LoginResponse, WechatLogin
 router = APIRouter()
 
 
-@router.post("/login", response_model=LoginResponse)
+@router.post("/login")
 async def wechat_login(
     login_req: WechatLogin,
     db: AsyncSession = Depends(get_db),
-) -> LoginResponse:
+) -> dict:
     """
     微信小程序登录。
     注意：生产环境中应调用微信服务器验证 code，此处为简化实现。
@@ -44,26 +44,28 @@ async def wechat_login(
     from src.core.security import create_access_token
     token = create_access_token(subject=str(user.id), role="admin" if user.is_admin else "user")
 
-    return LoginResponse(
-        access_token=token,
-        user=UserOut.model_validate(user),
+    return success(
+        data=LoginResponse(
+            access_token=token,
+            user=UserOut.model_validate(user),
+        ),
     )
 
 
-@router.get("/me", response_model=UserOut)
+@router.get("/me")
 async def get_profile(
     current_user: User = Depends(get_current_user),
-) -> UserOut:
+) -> dict:
     """获取当前用户信息."""
-    return UserOut.model_validate(current_user)
+    return success(data=UserOut.model_validate(current_user))
 
 
-@router.put("/me", response_model=UserOut)
+@router.put("/me")
 async def update_profile(
     update: UserUpdate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> UserOut:
+) -> dict:
     """更新当前用户信息."""
     if update.nickname is not None:
         current_user.nickname = update.nickname
@@ -77,4 +79,4 @@ async def update_profile(
         current_user.phone = update.phone
 
     await db.flush()
-    return UserOut.model_validate(current_user)
+    return success(data=UserOut.model_validate(current_user))
