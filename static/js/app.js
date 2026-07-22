@@ -93,6 +93,28 @@ function showPage(id) {
   document.querySelectorAll('.nav-item').forEach(n => {
     n.classList.toggle('active', n.dataset.page === id);
   });
+
+  // Header title & back button
+  const backBtn = document.getElementById('back-btn');
+  const titles = {
+    'menu-page': '菜单', 'cart-page': '购物车', 'orders-page': '订单',
+    'admin-page': '管理后台', 'profile-page': '我的', 'detail-page': '详情',
+    'recommend-page': '智能助手',
+  };
+  if (backBtn) backBtn.style.display = id === 'detail-page' ? '' : 'none';
+  const titleEl = document.getElementById('page-title');
+  if (titleEl) titleEl.textContent = titles[id] || '点菜';
+
+  // Auto-load for admin page
+  if (id === 'admin-page') initAdmin();
+  if (id === 'orders-page') loadOrders();
+  if (id === 'cart-page') renderCart();
+  if (id === 'recommend-page') loadRecommend();
+  if (id === 'profile-page') initProfile();
+}
+
+function goBack() {
+  showPage('menu-page');
 }
 
 function formatTime(dateStr) {
@@ -1330,6 +1352,37 @@ function switchAdminTab(tab) {
   if (tab === 'pending') loadAdminPending();
   if (tab === 'users') loadAdminUsers();
   if (tab === 'materials') loadAdminMaterials();
+}
+
+// ==================== Profile ====================
+async function initProfile() {
+  updateUserUI();
+  const { token, user } = await checkLogin();
+  const loggedIn = !!token;
+  document.getElementById('logout-btn').style.display = loggedIn ? '' : 'none';
+  document.getElementById('admin-entry-btn').style.display = user && (user.role === 'admin' || user.role === 'chef') ? '' : 'none';
+}
+
+function showSubmitPending() {
+  document.getElementById('pending-modal').classList.remove('hidden');
+}
+
+async function submitPendingDish() {
+  const name = document.getElementById('f-pending-name').value;
+  if (!name.trim()) { toast('请输入菜品名称'); return; }
+  try {
+    await menuApi.submitPendingDish({
+      name: name,
+      description: document.getElementById('f-pending-desc').value || undefined,
+      suggested_price: document.getElementById('f-pending-price').value ? Number(document.getElementById('f-pending-price').value) : undefined,
+    });
+    document.getElementById('pending-modal').classList.add('hidden');
+    document.getElementById('f-pending-name').value = '';
+    document.getElementById('f-pending-desc').value = '';
+    document.getElementById('f-pending-price').value = '';
+    toast('提交成功，等待审核');
+    initProfile();
+  } catch(e) { toast('提交失败'); }
 }
 
 // ==================== AI Chat ====================
