@@ -29,7 +29,8 @@
       "Bash(curl *)",
       "Bash(pip show *)",
       "Bash(ssh-keygen -t ed25519 -f ~/.ssh/github_deploy -N \"\" -q)",
-      "Bash(ssh-add ~/.ssh/github_deploy)"
+      "Bash(ssh-add ~/.ssh/github_deploy)",
+      "WebSearch"
     ]
   }
 }

@@ -67,6 +67,9 @@ const adminApi = {
   deleteOrder: (id) => api('/admin/orders/' + id, { method: 'DELETE' }),
   deleteUser: (id) => api('/admin/users/' + id, { method: 'DELETE' }),
   deleteMaterial: (id) => api('/admin/materials/' + id, { method: 'DELETE' }),
+  batchDeleteOrders: (ids) => api('/admin/orders/batch-delete', { method: 'POST', data: { ids } }),
+  batchDeleteUsers: (ids) => api('/admin/users/batch-delete', { method: 'POST', data: { ids } }),
+  batchDeleteMaterials: (ids) => api('/admin/materials/batch-delete', { method: 'POST', data: { ids } }),
 };
 
 /* ========== Helpers ========== */
@@ -593,42 +596,51 @@ async function loadAdminStats() {
 
 // Admin Dishes
 let adminDishes = [];
+let adminDishSearch = '';
 
 async function loadAdminDishes() {
   try {
-    const res = await adminApi.getDishes({ page_size: 100 });
+    const res = await adminApi.getDishes({ page_size: 200 });
     adminDishes = res.data.items || [];
     renderAdminDishes();
-    // Load categories for modal
     const catRes = await adminApi.getCategories();
     window._adminCategories = catRes.data || [];
   } catch (e) { console.error(e); }
 }
 
+function searchAdminDishes() {
+  adminDishSearch = (document.getElementById('dish-search').value || '').trim();
+  renderAdminDishes();
+}
+
 function renderAdminDishes() {
   const el = document.getElementById('admin-dish-list');
   if (!el) return;
-  el.innerHTML = adminDishes.map(d => `
-    <div class="card">
+  const filtered = adminDishSearch
+    ? adminDishes.filter(d => (d.name || '').includes(adminDishSearch))
+    : adminDishes;
+  el.innerHTML = (filtered.length === 0 ? '<div class="text-secondary text-center" style="padding:40px">' + (adminDishSearch ? '无匹配菜品' : '暂无菜品') + '</div>'
+  : filtered.map(d => `
+    <div class="card" style="padding:12px">
       <div class="flex-between">
         <div>
           <strong>${d.name}</strong>
-          <span class="text-secondary" style="margin-left:8px;font-size:12px">${dishStatusText(d.status)}</span>
+          <span class="text-secondary" style="margin-left:6px;font-size:12px">${dishStatusText(d.status)}</span>
         </div>
-        <span style="color:var(--red)">${d.price !== null ? '¥' + d.price : '待定价'}</span>
+        <span style="color:var(--red);font-weight:600">${d.price !== null ? '¥' + d.price : '待定价'}</span>
       </div>
       <div class="flex-between mt-8">
-        <span class="text-secondary">${d.category_name || ''}</span>
-        <div class="gap-8" style="display:flex">
-          <button class="btn btn-small btn-outline" onclick="showAdminDishModal(${d.id})">编辑</button>
-          <button class="btn btn-small ${d.status === 'active' ? 'btn-danger' : 'btn-primary'}" onclick="toggleDishStatus(${d.id}, '${d.status}')">
+        <span class="text-secondary" style="font-size:13px">${d.category_name || ''}</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-small btn-outline" onclick="showAdminDishModal(${d.id})" style="font-size:12px">编辑</button>
+          <button class="btn btn-small ${d.status === 'active' ? 'btn-danger' : 'btn-primary'}" onclick="toggleDishStatus(${d.id}, '${d.status}')" style="font-size:12px">
             ${d.status === 'active' ? '下架' : '上架'}
           </button>
         </div>
       </div>
     </div>
-  `).join('');
-}
+  `).join('')}</parameter>
+
 
 async function toggleDishStatus(id, status) {
   try {
@@ -697,20 +709,31 @@ async function showAddCategoryInModal() {
   } catch (e) { toast('创建失败: ' + e.message); }
 }
 
-async function loadDishMaterials() {
+let _allMaterials = [];
+
+async function loadDishMaterials(filter = '') {
   try {
-    const res = await adminApi.getMaterials();
-    const mats = res.data || [];
+    if (!_allMaterials.length) {
+      const res = await adminApi.getMaterials();
+      _allMaterials = res.data || [];
+    }
     const el = document.getElementById('dish-material-select');
     if (!el) return;
     const selected = window._selectedMaterials || [];
-    el.innerHTML = mats.map(m => `
-      <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:14px;cursor:pointer;border-bottom:1px solid #f5f5f5">
-        <input type="checkbox" value="${m.id}" ${selected.includes(m.id) ? 'checked' : ''} onchange="toggleDishMaterial(${m.id}, this.checked)">
-        <span>${m.name}</span>
-        <span style="font-size:11px;color:var(--text-secondary);margin-left:auto">${m.category || ''}</span>
-      </label>
-    `).join('');
+    const filtered = filter ? _allMaterials.filter(m => m.name.includes(filter)) : _allMaterials;
+    el.innerHTML = `
+      <div style="margin-bottom:8px">
+        <input class="form-input" placeholder="搜索材料..." oninput="loadDishMaterials(this.value)" style="font-size:13px;padding:6px 10px">
+      </div>
+      ${filtered.map(m => `
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:14px;cursor:pointer;border-bottom:1px solid #f5f5f5">
+          <input type="checkbox" value="${m.id}" ${selected.includes(m.id) ? 'checked' : ''} onchange="toggleDishMaterial(${m.id}, this.checked)">
+          <span>${m.name}</span>
+          <span style="font-size:11px;color:var(--text-secondary);margin-left:auto">${m.category || ''}</span>
+        </label>
+      `).join('')}
+      ${filtered.length === 0 ? '<div style="padding:12px;text-align:center;color:var(--text-secondary);font-size:13px">无匹配材料</div>' : ''}
+    `;
   } catch (e) { console.error(e); }
 }
 
@@ -746,37 +769,48 @@ async function saveDish() {
 
 // Admin Orders
 let adminOrders = [];
+let adminOrderSearch = '';
 
 async function loadAdminOrders() {
   try {
     const apiCall = window._isAdmin ? adminApi.getOrders : adminApi.getChefOrders;
-    const res = await apiCall({ page_size: 50 });
+    const res = await apiCall({ page_size: 200 });
     adminOrders = res.data.items || [];
     renderAdminOrders();
   } catch (e) { console.error(e); }
 }
 
+function searchAdminOrders() {
+  adminOrderSearch = (document.getElementById('order-search').value || '').trim();
+  renderAdminOrders();
+}
+
 function renderAdminOrders() {
   const el = document.getElementById('admin-order-list');
   if (!el) return;
-  el.innerHTML = adminOrders.map(o => `
-    <div class="card">
+  const filtered = adminOrderSearch
+    ? adminOrders.filter(o => (o.order_no || '').includes(adminOrderSearch))
+    : adminOrders;
+  el.innerHTML = (filtered.length === 0 ? '<div class="text-secondary text-center" style="padding:40px">无匹配订单</div>'
+  : filtered.map(o => `
+    <div class="card" style="padding:12px">
+      ${window._isAdmin ? `<label style="float:right"><input type="checkbox" class="order-checkbox" value="${o.id}"></label>` : ''}
       <div class="flex-between">
-        <span class="text-secondary">${o.order_no}</span>
-        <span style="font-weight:500;color:var(--${o.status === 'pending' ? 'orange' : o.status === 'completed' ? 'green' : 'blue'})">${orderStatusText(o.status)}</span>
+        <span class="text-secondary" style="font-size:13px">${o.order_no}</span>
+        <span style="font-size:13px;font-weight:500;color:var(--${o.status === 'pending' ? 'orange' : o.status === 'completed' ? 'green' : 'blue'})">${orderStatusText(o.status)}</span>
       </div>
-      <div class="flex-between mt-8">
-        <span>用户ID: ${o.user_id}</span>
-        <span style="color:var(--red);font-weight:600">¥${o.total_price}</span>
+      <div class="flex-between mt-8" style="font-size:13px">
+        <span>¥${o.total_price}</span>
+        <span class="text-secondary">${o.item_count || 0}道菜</span>
       </div>
-      <div class="mt-8" style="display:flex;gap:8px;flex-wrap:wrap">
-        ${o.status === 'pending' ? `<button class="btn btn-small btn-primary" onclick="adminUpdateOrder(${o.id},'confirmed')">确认</button><button class="btn btn-small btn-danger" onclick="adminUpdateOrder(${o.id},'cancelled')">取消</button>` : ''}
-        ${o.status === 'confirmed' ? `<button class="btn btn-small btn-primary" onclick="adminUpdateOrder(${o.id},'preparing')">开始制作</button>` : ''}
+      <div class="mt-8" style="display:flex;gap:6px;flex-wrap:wrap">
+        ${o.status === 'pending' ? `<button class="btn btn-small btn-primary" onclick="adminUpdateOrder(${o.id},'confirmed')">确认</button><button class="btn btn-small btn-outline" onclick="adminUpdateOrder(${o.id},'cancelled')">取消</button>` : ''}
+        ${o.status === 'confirmed' ? `<button class="btn btn-small btn-primary" onclick="adminUpdateOrder(${o.id},'preparing')">制作</button>` : ''}
         ${o.status === 'preparing' ? `<button class="btn btn-small btn-primary" onclick="adminUpdateOrder(${o.id},'completed')">完成</button>` : ''}
         ${window._isAdmin ? `<button class="btn btn-small btn-outline" style="color:var(--red);border-color:var(--red)" onclick="adminDeleteOrder(${o.id})">删除</button>` : ''}
       </div>
     </div>
-  `).join('');
+  `).join('')}`);
 }
 
 async function adminUpdateOrder(id, status) {
@@ -792,6 +826,21 @@ async function adminDeleteOrder(id) {
   try {
     await adminApi.deleteOrder(id);
     toast('订单已删除');
+    loadAdminOrders();
+  } catch (e) { toast('删除失败'); }
+}
+
+function getSelectedIds(className) {
+  return Array.from(document.querySelectorAll('.' + className + ':checked')).map(cb => Number(cb.value));
+}
+
+async function batchDeleteSelectedOrders() {
+  const ids = getSelectedIds('order-checkbox');
+  if (!ids.length) { toast('请先勾选要删除的订单'); return; }
+  if (!confirm('确定要删除选中的 ' + ids.length + ' 个订单吗？')) return;
+  try {
+    await adminApi.batchDeleteOrders(ids);
+    toast('批量删除成功');
     loadAdminOrders();
   } catch (e) { toast('删除失败'); }
 }
@@ -881,36 +930,67 @@ async function rejectPending(id) {
 }
 
 // Admin Materials
+let adminMaterials = [];
+let adminMatSearch = '';
+
 async function loadAdminMaterials() {
   try {
     const res = await adminApi.getMaterials();
-    const mats = res.data || [];
-    const groups = {};
-    mats.forEach(m => {
-      const key = m.category || '未分类';
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(m);
-    });
-    const el = document.getElementById('admin-material-list');
-    if (!el) return;
-    el.innerHTML = Object.entries(groups).map(([key, list]) => `
-      <div style="margin-bottom:16px">
-        <div style="font-weight:600;font-size:15px;margin-bottom:8px;padding-left:8px;border-left:3px solid var(--green)">${key}</div>
-        ${list.map(m => `
-          <div class="card" style="padding:10px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <div>
-              <span>${m.name}</span>
-              ${m.is_allergen ? '<span style="font-size:11px;color:var(--red);margin-left:6px">⚠️ 过敏原</span>' : ''}
-            </div>
-            <div style="display:flex;gap:6px">
-              <button class="btn btn-small btn-outline" style="font-size:12px;padding:2px 10px" onclick="showEditMaterialModal(${m.id})">编辑</button>
-              <button class="btn btn-small btn-outline" style="color:var(--red);border-color:var(--red);font-size:12px;padding:2px 10px" onclick="adminDeleteMaterial(${m.id})">删除</button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `).join('');
+    adminMaterials = res.data || [];
+    renderAdminMaterials();
   } catch (e) { console.error(e); }
+}
+
+function searchAdminMaterials() {
+  adminMatSearch = (document.getElementById('material-search').value || '').trim();
+  renderAdminMaterials();
+}
+
+function renderAdminMaterials() {
+  const el = document.getElementById('admin-material-list');
+  if (!el) return;
+  const filtered = adminMatSearch
+    ? adminMaterials.filter(m => m.name.includes(adminMatSearch))
+    : adminMaterials;
+  if (filtered.length === 0) {
+    el.innerHTML = '<div class="text-secondary text-center" style="padding:40px">' + (adminMatSearch ? '无匹配材料' : '暂无材料') + '</div>';
+    return;
+  }
+  const groups = {};
+  filtered.forEach(m => {
+    const key = m.category || '未分类';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(m);
+  });
+  el.innerHTML = Object.entries(groups).map(([key, list]) => `
+    <div style="margin-bottom:12px">
+      <div style="font-weight:600;font-size:14px;margin-bottom:6px;padding-left:8px;border-left:3px solid var(--green)">${key}</div>
+      ${list.map(m => `
+        <div class="card" style="padding:8px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <label style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer">
+            <input type="checkbox" class="material-checkbox" value="${m.id}">
+            <span>${m.name}</span>
+            ${m.is_allergen ? '<span style="font-size:10px;color:var(--red);padding:1px 4px;background:#fef0f0;border-radius:3px">过敏原</span>' : ''}
+          </label>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-small btn-outline" style="font-size:11px;padding:2px 8px" onclick="showEditMaterialModal(${m.id})">编辑</button>
+            <button class="btn btn-small btn-outline" style="color:var(--red);border-color:var(--red);font-size:11px;padding:2px 8px" onclick="adminDeleteMaterial(${m.id})">删</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+async function batchDeleteSelectedMaterials() {
+  const ids = getSelectedIds('material-checkbox');
+  if (!ids.length) { toast('请先勾选要删除的材料'); return; }
+  if (!confirm('确定要删除选中的 ' + ids.length + ' 个材料吗？')) return;
+  try {
+    await adminApi.batchDeleteMaterials(ids);
+    toast('批量删除成功');
+    loadAdminMaterials();
+  } catch (e) { toast('删除失败'); }
 }
 
 function showAddMaterialModal() {
@@ -1013,30 +1093,55 @@ async function adminDeleteUser(id) {
 }
 
 // Admin Users
+let adminUsers = [];
+let adminUserSearch = '';
+
 async function loadAdminUsers() {
   try {
-    const res = await adminApi.getUsers({ page_size: 100 });
-    const users = res.data.items || [];
-    const el = document.getElementById('admin-user-list');
-    if (!el) return;
-    el.innerHTML = users.map(u => `
-      <div class="card">
-        <div class="flex-between">
-          <div>
-            <strong>${u.nickname || u.username}</strong>
-            <span style="font-size:12px;margin-left:8px;color:var(--text-secondary)">@${u.username}</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:12px;padding:2px 8px;border-radius:4px;background:${u.role === 'admin' ? '#fef0f0' : u.role === 'chef' ? '#fdf6ec' : '#f0f9eb'};color:${u.role === 'admin' ? '#f56c6c' : u.role === 'chef' ? '#e6a23c' : '#67c23a'}">
-              ${u.role === 'admin' ? '管理员' : u.role === 'chef' ? '厨师' : '点餐用户'}
-            </span>
-            <button class="btn btn-small btn-outline" style="color:var(--red);border-color:var(--red);font-size:12px;padding:2px 10px" onclick="adminDeleteUser(${u.id})">删除</button>
-          </div>
-        </div>
-        <div class="text-secondary mt-8">${u.is_active ? '正常' : '已禁用'}</div>
-      </div>
-    `).join('');
+    const res = await adminApi.getUsers({ page_size: 200 });
+    adminUsers = res.data.items || [];
+    renderAdminUsers();
   } catch (e) { console.error(e); }
+}
+
+function searchAdminUsers() {
+  adminUserSearch = (document.getElementById('user-search').value || '').trim();
+  renderAdminUsers();
+}
+
+function renderAdminUsers() {
+  const el = document.getElementById('admin-user-list');
+  if (!el) return;
+  const filtered = adminUserSearch
+    ? adminUsers.filter(u => (u.username || '').includes(adminUserSearch) || (u.nickname || '').includes(adminUserSearch))
+    : adminUsers;
+  el.innerHTML = (filtered.length === 0 ? '<div class="text-secondary text-center" style="padding:40px">无匹配用户</div>'
+  : filtered.map(u => `
+    <div class="card" style="padding:12px">
+      <label style="float:right"><input type="checkbox" class="user-checkbox" value="${u.id}"></label>
+      <div class="flex-between">
+        <div>
+          <strong>${u.nickname || u.username}</strong>
+          <span style="font-size:12px;margin-left:6px;color:var(--text-secondary)">@${u.username}</span>
+        </div>
+        <span style="font-size:12px;padding:2px 8px;border-radius:4px;background:${u.role === 'admin' ? '#fef0f0' : u.role === 'chef' ? '#fdf6ec' : '#f0f9eb'};color:${u.role === 'admin' ? '#f56c6c' : u.role === 'chef' ? '#e6a23c' : '#67c23a'}">
+          ${u.role === 'admin' ? '管理员' : u.role === 'chef' ? '厨师' : '点餐用户'}
+        </span>
+      </div>
+      <div class="text-secondary mt-8" style="font-size:13px">${u.is_active ? '正常' : '已禁用'}</div>
+    </div>
+  `).join('')}`);
+}
+
+async function batchDeleteSelectedUsers() {
+  const ids = getSelectedIds('user-checkbox');
+  if (!ids.length) { toast('请先勾选要删除的用户'); return; }
+  if (!confirm('确定要删除选中的 ' + ids.length + ' 个用户吗？')) return;
+  try {
+    await adminApi.batchDeleteUsers(ids);
+    toast('批量删除成功');
+    loadAdminUsers();
+  } catch (e) { toast('删除失败: ' + e.message); }
 }
 
 function showAddUserModal() {

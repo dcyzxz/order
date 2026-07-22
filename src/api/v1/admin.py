@@ -4,6 +4,7 @@ import json
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -28,6 +29,10 @@ from src.schemas.pending_dish import PendingDishCreate, PendingDishOut, PendingD
 from src.schemas.user import UserCreate as UserCreateSchema, UserUpdate as UserUpdateSchema, UserOut
 
 router = APIRouter()
+
+
+class BatchIds(BaseModel):
+    ids: list[int]
 
 
 # ==================== 用户管理 ====================
@@ -138,6 +143,35 @@ async def delete_user(
     await db.delete(user)
     await db.flush()
     return success(message="用户已删除")
+
+
+@router.post("/users/batch-delete")
+async def batch_delete_users(
+    body: BatchIds,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """批量删除用户."""
+    for uid in body.ids:
+        if uid == admin.id:
+            continue
+        result = await db.execute(select(User).where(User.id == uid))
+        user = result.scalar_one_or_none()
+        if user is None:
+            continue
+        # Clean up related records
+        orders = await db.execute(select(Order).where(Order.user_id == uid))
+        for o in orders.scalars().all():
+            await db.delete(o)
+        pendings = await db.execute(select(PendingDish).where(PendingDish.user_id == uid))
+        for p in pendings.scalars().all():
+            await db.delete(p)
+        admin_ps = await db.execute(select(PendingDish).where(PendingDish.admin_id == uid))
+        for p in admin_ps.scalars().all():
+            p.admin_id = None
+        await db.delete(user)
+    await db.flush()
+    return success(message=f"已删除 {len(body.ids)} 个用户")
 
 
 # ==================== 菜品管理 ====================
@@ -398,6 +432,20 @@ async def delete_material(
     return success(message="材料已删除")
 
 
+@router.post("/materials/batch-delete")
+async def batch_delete_materials(
+    body: BatchIds,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """批量删除材料."""
+    result = await db.execute(select(Material).where(Material.id.in_(body.ids)))
+    for mat in result.scalars().all():
+        await db.delete(mat)
+    await db.flush()
+    return success(message=f"已删除 {len(body.ids)} 个材料")
+
+
 # ==================== 订单管理 ====================
 
 @router.get("/orders/chef")
@@ -481,6 +529,20 @@ async def delete_order(
     await db.delete(order)
     await db.flush()
     return success(message="订单已删除")
+
+
+@router.post("/orders/batch-delete")
+async def batch_delete_orders(
+    body: BatchIds,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """批量删除订单."""
+    result = await db.execute(select(Order).where(Order.id.in_(body.ids)))
+    for order in result.scalars().all():
+        await db.delete(order)
+    await db.flush()
+    return success(message=f"已删除 {len(body.ids)} 个订单")
 
 
 # ==================== 待定价菜品审核 ====================
