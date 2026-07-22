@@ -153,8 +153,10 @@ async function doLogin() {
 
 function updateUserUI() {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
-  document.getElementById('user-name').textContent = user ? user.nickname || '用户' : '未登录';
-  document.getElementById('admin-link').style.display = user && user.is_admin ? '' : 'none';
+  const nameEl = document.getElementById('user-name-display');
+  if (nameEl) nameEl.textContent = user ? user.nickname || '用户' : '未登录';
+  const adminEntry = document.getElementById('admin-entry-btn');
+  if (adminEntry) adminEntry.style.display = user && user.is_admin ? '' : 'none';
 }
 
 function logout() {
