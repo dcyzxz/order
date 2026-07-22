@@ -49,7 +49,7 @@ async def auth_token(client: AsyncClient, db_session: AsyncSession, seed_data: d
         json={"code": "test_code_orders"},
     )
     data = response.json()
-    return data["access_token"]
+    return data["data"]["access_token"]
 
 
 @pytest.fixture

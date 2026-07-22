@@ -6,10 +6,16 @@ async function api(path, options = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = 'Bearer ' + token;
 
-  const res = await fetch(API_BASE + path, {
-    ...options,
+  const { data: bodyData, ...fetchOpts } = options;
+  const fetchOptions = {
+    ...fetchOpts,
     headers: { ...headers, ...options.headers },
-  });
+  };
+  if (bodyData !== undefined) {
+    fetchOptions.body = JSON.stringify(bodyData);
+  }
+
+  const res = await fetch(API_BASE + path, fetchOptions);
   const data = await res.json();
   if (!res.ok || data.code >= 400) throw new Error(data.message || '请求失败');
   return data;
