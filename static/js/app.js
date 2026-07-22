@@ -600,7 +600,7 @@ let adminDishSearch = '';
 
 async function loadAdminDishes() {
   try {
-    const res = await adminApi.getDishes({ page_size: 200 });
+    const res = await adminApi.getDishes({ page_size: 100 });
     adminDishes = res.data.items || [];
     renderAdminDishes();
     const catRes = await adminApi.getCategories();
@@ -775,7 +775,7 @@ let adminOrderSearch = '';
 async function loadAdminOrders() {
   try {
     const apiCall = window._isAdmin ? adminApi.getOrders : adminApi.getChefOrders;
-    const res = await apiCall({ page_size: 200 });
+    const res = await apiCall({ page_size: 100 });
     adminOrders = res.data.items || [];
     renderAdminOrders();
   } catch (e) { console.error(e); }
@@ -1099,7 +1099,7 @@ let adminUserSearch = '';
 
 async function loadAdminUsers() {
   try {
-    const res = await adminApi.getUsers({ page_size: 200 });
+    const res = await adminApi.getUsers({ page_size: 100 });
     adminUsers = res.data.items || [];
     renderAdminUsers();
   } catch (e) { console.error(e); }
