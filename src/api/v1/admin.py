@@ -384,6 +384,7 @@ async def admin_list_dishes(
             status=d.status,
             is_recommended=d.is_recommended,
             sales_count=d.sales_count,
+            materials=[MaterialOut.model_validate(m) for m in (d.materials or [])],
             created_at=d.created_at,
         ))
 
