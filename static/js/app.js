@@ -674,6 +674,16 @@ function showAdminDishModal(id) {
       <input class="form-input" id="f-dish-price" type="number" step="0.01" value="${dish && dish.price ? dish.price : ''}">
     </div>
     <div class="form-group">
+      <label>图片</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input class="form-input" id="f-dish-image" placeholder="图片URL或上传" value="${dish && dish.image_url || ''}" style="flex:1">
+        <button class="btn btn-small btn-primary" onclick="uploadDishImage()" style="flex-shrink:0">上传</button>
+      </div>
+      <div id="dish-image-preview" style="margin-top:8px;display:none">
+        <img id="dish-image-img" style="max-width:100%;max-height:120px;border-radius:8px">
+      </div>
+    </div>
+    <div class="form-group">
       <label>分类</label>
       <div style="display:flex;gap:8px">
         <select class="form-select" id="f-dish-cat" style="flex:1">
@@ -697,6 +707,52 @@ function showAdminDishModal(id) {
   loadDishMaterials();
   document.getElementById('dish-modal-title').textContent = id ? '编辑菜品' : '新增菜品';
   document.getElementById('dish-modal').classList.remove('hidden');
+}
+
+// Image preview on URL input
+document.addEventListener('input', function(e) {
+  if (e.target && e.target.id === 'f-dish-image') {
+    const val = e.target.value.trim();
+    const preview = document.getElementById('dish-image-preview');
+    const img = document.getElementById('dish-image-img');
+    if (val && (val.startsWith('http') || val.startsWith('/static'))) {
+      preview.style.display = '';
+      img.src = val;
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+});
+
+async function uploadDishImage() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/jpeg,image/png,image/gif,image/webp';
+  input.onchange = async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast('图片不能超过 5MB'); return; }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = localStorage.getItem('token');
+    const res = await fetch(window.location.origin + '/api/v1/admin/upload', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok || data.code >= 400) { toast(data.message || '上传失败'); return; }
+
+    document.getElementById('f-dish-image').value = data.data.url;
+    // Show preview
+    const preview = document.getElementById('dish-image-preview');
+    const img = document.getElementById('dish-image-img');
+    preview.style.display = '';
+    img.src = data.data.url;
+    toast('上传成功');
+  };
+  input.click();
 }
 
 async function showAddCategoryInModal() {
@@ -761,6 +817,7 @@ async function saveDish() {
   const data = {
     name: document.getElementById('f-dish-name').value,
     price: document.getElementById('f-dish-price').value ? Number(document.getElementById('f-dish-price').value) : null,
+    image_url: document.getElementById('f-dish-image').value.trim() || null,
     category_id: document.getElementById('f-dish-cat').value ? Number(document.getElementById('f-dish-cat').value) : null,
     description: document.getElementById('f-dish-desc').value || null,
     material_ids: window._selectedMaterials || [],

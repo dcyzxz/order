@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
+import uuid
 from decimal import Decimal
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
@@ -27,12 +30,45 @@ from src.schemas.material import MaterialCreate, MaterialUpdate, MaterialOut
 from src.schemas.order import OrderOut
 from src.schemas.pending_dish import PendingDishCreate, PendingDishOut, PendingDishReview
 from src.schemas.user import UserCreate as UserCreateSchema, UserUpdate as UserUpdateSchema, UserOut
+from fastapi import UploadFile, File
 
 router = APIRouter()
 
 
 class BatchIds(BaseModel):
     ids: list[int]
+
+
+# ==================== 文件上传 ====================
+
+UPLOAD_DIR = Path(__file__).parent.parent.parent.parent / "static" / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+
+@router.post("/upload")
+async def upload_file(
+    file: UploadFile = File(...),
+    staff: User = Depends(get_staff_user),
+):
+    """上传图片（菜品图片等）. """
+    # 校验文件类型
+    ext = os.path.splitext(file.filename or "image.jpg")[1].lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+        raise BusinessError(message="仅支持 jpg/png/gif/webp 格式")
+
+    # 生成唯一文件名
+    filename = f"{uuid.uuid4().hex}{ext}"
+    filepath = UPLOAD_DIR / filename
+
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:  # 5MB
+        raise BusinessError(message="文件大小不能超过 5MB")
+
+    with open(filepath, "wb") as f:
+        f.write(content)
+
+    url = f"/static/uploads/{filename}"
+    return success(data={"url": url}, message="上传成功")
 
 
 # ==================== 用户管理 ====================
