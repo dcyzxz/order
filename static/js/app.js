@@ -639,7 +639,8 @@ function renderAdminDishes() {
         </div>
       </div>
     </div>
-  `).join('')}</parameter>
+  `).join(''));
+}
 
 
 async function toggleDishStatus(id, status) {
@@ -810,7 +811,7 @@ function renderAdminOrders() {
         ${window._isAdmin ? `<button class="btn btn-small btn-outline" style="color:var(--red);border-color:var(--red)" onclick="adminDeleteOrder(${o.id})">删除</button>` : ''}
       </div>
     </div>
-  `).join('')}`);
+  `).join(''));
 }
 
 async function adminUpdateOrder(id, status) {
@@ -1130,7 +1131,7 @@ function renderAdminUsers() {
       </div>
       <div class="text-secondary mt-8" style="font-size:13px">${u.is_active ? '正常' : '已禁用'}</div>
     </div>
-  `).join('')}`);
+  `).join(''));
 }
 
 async function batchDeleteSelectedUsers() {
