@@ -13,7 +13,7 @@ class DishCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=64, description="菜品名称")
     description: str | None = Field(None, description="菜品描述")
     price: Decimal | None = Field(None, ge=0, decimal_places=2, description="定价")
-    image_url: str | None = Field(None, max_length=512, description="图片URL")
+    image_url: str | None = Field(None, max_length=50000, description="图片URL")
     category_id: int | None = Field(None, description="分类ID")
     material_ids: list[int] = Field(default_factory=list, description="关联材料ID列表")
     is_recommended: bool = False
