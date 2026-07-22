@@ -31,7 +31,7 @@
     </div>
     <div class="cart-bottom" id="cart-bottom-bar" style="display:none">
       <div class="cart-total">合计: <span id="cart-total">¥0.00</span></div>
-      <button class="btn btn-primary" onclick="createOrder()">去结算</button>
+      <button class="btn btn-primary" onclick="showOrderConfirm()">去结算</button>
     </div>
   </div>
 
@@ -171,6 +171,26 @@
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="document.getElementById('review-modal').classList.add('hidden')">取消</button>
         <button class="btn btn-primary" onclick="submitReview()">确认通过</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Confirm Modal -->
+  <div class="modal-overlay hidden" id="order-modal" onclick="document.getElementById('order-modal').classList.add('hidden')">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <h3>确认订单</h3>
+      <div id="order-confirm-items" style="margin-bottom:16px"></div>
+      <div class="form-group">
+        <label>备注（选填）</label>
+        <textarea class="form-textarea" id="order-note" placeholder="口味要求、特殊备注等" maxlength="500"></textarea>
+      </div>
+      <div class="flex-between" style="font-size:18px;font-weight:600;margin-bottom:16px">
+        <span>合计</span>
+        <span style="color:var(--red)" id="order-confirm-total">¥0.00</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="document.getElementById('order-modal').classList.add('hidden')">再想想</button>
+        <button class="btn btn-primary" onclick="submitOrder()">确认下单</button>
       </div>
     </div>
   </div>

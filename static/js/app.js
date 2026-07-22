@@ -380,10 +380,28 @@ function cartChangeQty(idx, delta) {
 }
 
 // Create Order
-async function createOrder() {
+function showOrderConfirm() {
   const cart = getCart();
   if (cart.length === 0) { toast('购物车为空'); return; }
   if (!localStorage.getItem('token')) { toast('请先登录'); return; }
+
+  const total = cart.reduce((s, i) => s + (i.price || 0) * i.quantity, 0);
+  document.getElementById('order-confirm-total').textContent = '¥' + total.toFixed(2);
+  document.getElementById('order-note').value = '';
+
+  document.getElementById('order-confirm-items').innerHTML = cart.map(item => `
+    <div class="order-item-row">
+      <span>${item.dishName} ×${item.quantity}</span>
+      <span style="color:var(--red)">¥${((item.price || 0) * item.quantity).toFixed(2)}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('order-modal').classList.remove('hidden');
+}
+
+async function submitOrder() {
+  const cart = getCart();
+  if (cart.length === 0) return;
 
   try {
     const items = cart.map(i => ({
@@ -391,9 +409,11 @@ async function createOrder() {
       quantity: i.quantity,
       excluded_material_ids: i.excludedMaterialIds || [],
     }));
-    const res = await orderApi.createOrder({ items });
+    const note = document.getElementById('order-note').value.trim() || undefined;
+    await orderApi.createOrder({ items, note });
     setCart([]);
     updateCartBadge();
+    document.getElementById('order-modal').classList.add('hidden');
     toast('下单成功！');
     loadOrders();
     showPage('orders-page');
