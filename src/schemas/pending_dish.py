@@ -10,7 +10,7 @@ class PendingDishCreate(BaseModel):
     """用户提交待定价菜品."""
     name: str = Field(..., min_length=1, max_length=64, description="菜品名称")
     description: str | None = Field(None, description="菜品描述")
-    image_url: str | None = Field(None, max_length=50000, description="参考图片URL")
+    image_url: str | None = Field(None, max_length=5000000, description="参考图片URL")
     suggested_price: Decimal | None = Field(None, ge=0, decimal_places=2, description="建议价格")
 
 

@@ -27,7 +27,7 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     """更新用户信息."""
     nickname: str | None = Field(None, max_length=64)
-    avatar_url: str | None = Field(None, max_length=50000)
+    avatar_url: str | None = Field(None, max_length=5000000)
     phone: str | None = Field(None, max_length=20)
     bio: str | None = Field(None, max_length=256)
     role: str | None = Field(None, pattern=r"^(admin|chef|user)$")
