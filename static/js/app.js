@@ -61,6 +61,9 @@ const adminApi = {
   createUser: (data) => api('/admin/users', { method: 'POST', data }),
   getUsers: (params) => api('/admin/users?' + new URLSearchParams(params)),
   updateUser: (id, data) => api('/admin/users/' + id, { method: 'PUT', data }),
+  // Chef orders
+  getChefOrders: (params) => api('/admin/orders/chef?' + new URLSearchParams(params)),
+  deleteOrder: (id) => api('/admin/orders/' + id, { method: 'DELETE' }),
 };
 
 /* ========== Helpers ========== */
@@ -184,7 +187,7 @@ function updateUserUI() {
   }
 
   const adminEntry = document.getElementById('admin-entry-btn');
-  if (adminEntry) adminEntry.style.display = user && user.role === 'admin' ? '' : 'none';
+  if (adminEntry) adminEntry.style.display = user && (user.role === 'admin' || user.role === 'chef') ? '' : 'none';
 }
 
 function logout() {
@@ -536,11 +539,26 @@ async function cancelCurrentOrder(id) {
 
 // ==================== Admin ====================
 async function initAdmin() {
-  loadAdminStats();
-  loadAdminDishes();
-  loadAdminOrders();
-  loadAdminPending();
-  loadAdminMaterials();
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  window._isAdmin = user && user.role === 'admin';
+  window._isChef = user && user.role === 'chef';
+
+  // Chef only sees orders tab
+  document.querySelectorAll('.admin-nav .category-tab').forEach(t => {
+    if (t.dataset.tab === 'dishes' || t.dataset.tab === 'users' || t.dataset.tab === 'pending' || t.dataset.tab === 'materials') {
+      t.style.display = window._isAdmin ? '' : 'none';
+    }
+  });
+
+  if (window._isChef) {
+    switchAdminTab('orders');
+  } else {
+    switchAdminTab('dishes');
+  }
+
+  // Show stats only for admin
+  const statsEl = document.querySelector('.stats-row');
+  if (statsEl) statsEl.style.display = window._isAdmin ? '' : 'none';
 }
 
 // Admin Stats
@@ -658,7 +676,8 @@ let adminOrders = [];
 
 async function loadAdminOrders() {
   try {
-    const res = await adminApi.getOrders({ page_size: 50 });
+    const apiCall = window._isAdmin ? adminApi.getOrders : adminApi.getChefOrders;
+    const res = await apiCall({ page_size: 50 });
     adminOrders = res.data.items || [];
     renderAdminOrders();
   } catch (e) { console.error(e); }
@@ -681,6 +700,7 @@ function renderAdminOrders() {
         ${o.status === 'pending' ? `<button class="btn btn-small btn-primary" onclick="adminUpdateOrder(${o.id},'confirmed')">确认</button><button class="btn btn-small btn-danger" onclick="adminUpdateOrder(${o.id},'cancelled')">取消</button>` : ''}
         ${o.status === 'confirmed' ? `<button class="btn btn-small btn-primary" onclick="adminUpdateOrder(${o.id},'preparing')">开始制作</button>` : ''}
         ${o.status === 'preparing' ? `<button class="btn btn-small btn-primary" onclick="adminUpdateOrder(${o.id},'completed')">完成</button>` : ''}
+        ${window._isAdmin ? `<button class="btn btn-small btn-outline" style="color:var(--red);border-color:var(--red)" onclick="adminDeleteOrder(${o.id})">删除</button>` : ''}
       </div>
     </div>
   `).join('');
@@ -692,6 +712,15 @@ async function adminUpdateOrder(id, status) {
     toast('状态已更新');
     loadAdminOrders();
   } catch (e) { toast('操作失败'); }
+}
+
+async function adminDeleteOrder(id) {
+  if (!confirm('确定要删除此订单吗？')) return;
+  try {
+    await adminApi.deleteOrder(id);
+    toast('订单已删除');
+    loadAdminOrders();
+  } catch (e) { toast('删除失败'); }
 }
 
 // Admin Pending

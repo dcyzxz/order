@@ -8,7 +8,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.api.deps import get_admin_user, get_current_user
+from src.api.deps import get_admin_user, get_current_user, get_staff_user
 from src.api.response import success, paginated
 from src.core.database import get_db
 from src.core.exceptions import BusinessError, NotFoundError
@@ -331,6 +331,28 @@ async def admin_list_materials(
 
 # ==================== 订单管理 ====================
 
+@router.get("/orders/chef")
+async def chef_list_orders(
+    status: str | None = Query(None, pattern=r"^(pending|confirmed|preparing|completed|cancelled)$"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    staff: User = Depends(get_staff_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """厨师/管理员查看订单."""
+    query = select(Order).options(selectinload(Order.items), selectinload(Order.user))
+
+    if status:
+        query = query.where(Order.status == status)
+
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar() or 0
+
+    query = query.order_by(Order.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+    result = await db.execute(query)
+    orders = result.scalars().all()
+    return paginated(items=[OrderOut.model_validate(o) for o in orders], total=total, page=page, page_size=page_size)
+
 @router.get("/orders")
 async def admin_list_orders(
     status: str | None = Query(None, pattern=r"^(pending|confirmed|preparing|completed|cancelled)$"),
@@ -371,6 +393,25 @@ async def update_order_status(
     order.status = new_status
     await db.flush()
     return success(data=OrderOut.model_validate(order), message=f"订单状态已更新为 {new_status}")
+
+
+@router.delete("/orders/{order_id}")
+async def delete_order(
+    order_id: int,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """管理员删除订单."""
+    result = await db.execute(
+        select(Order).where(Order.id == order_id).options(selectinload(Order.items))
+    )
+    order = result.scalar_one_or_none()
+    if order is None:
+        raise NotFoundError(message="订单不存在")
+
+    await db.delete(order)
+    await db.flush()
+    return success(message="订单已删除")
 
 
 # ==================== 待定价菜品审核 ====================

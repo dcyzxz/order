@@ -76,7 +76,7 @@
       </div>
 
       <div id="admin-tab-dishes" class="admin-tab">
-        <button class="btn btn-primary btn-small mb-8" onclick="showAdminDishModal(null)">+ 新增菜品</button>
+        <button class="btn btn-primary btn-small mb-8" id="admin-add-dish-btn" onclick="showAdminDishModal(null)">+ 新增菜品</button>
         <div id="admin-dish-list"></div>
       </div>
 
@@ -288,7 +288,7 @@
       const { token, user } = await checkLogin();
       const loggedIn = !!token;
       document.getElementById('logout-btn').style.display = loggedIn ? '' : 'none';
-      document.getElementById('admin-entry-btn').style.display = user && user.role === 'admin' ? '' : 'none';
+      document.getElementById('admin-entry-btn').style.display = user && (user.role === 'admin' || user.role === 'chef') ? '' : 'none';
     }
 
     function showSubmitPending() {

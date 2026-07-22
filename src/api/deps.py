@@ -41,3 +41,12 @@ async def get_admin_user(
     if current_user.role != "admin":
         raise AuthError(message="Admin access required", code=403)
     return current_user
+
+
+async def get_staff_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Get staff user (admin or chef)."""
+    if current_user.role not in ("admin", "chef"):
+        raise AuthError(message="Staff access required", code=403)
+    return current_user
