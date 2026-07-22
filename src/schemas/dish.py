@@ -61,6 +61,7 @@ class DishList(BaseModel):
     image_url: str | None = None
     category_id: int | None = None
     category_name: str | None = None
+    category_ids: list[int] = Field(default_factory=list)
     status: str
     is_recommended: bool = False
     sales_count: int = 0

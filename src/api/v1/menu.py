@@ -53,17 +53,8 @@ async def list_dishes(
     )
 
     if category_id:
-        # 从 dish_categories 找出属于该分类的所有菜品ID
-        dc_result = await db.execute(
-            select(DishCategory.dish_id).where(DishCategory.category_id == category_id)
-        )
-        dc_dish_ids = {row[0] for row in dc_result.all()}
-        if dc_dish_ids:
-            query = query.where(
-                (Dish.category_id == category_id) | Dish.id.in_(dc_dish_ids)
-            )
-        else:
-            query = query.where(Dish.category_id == category_id)
+        # 主分类匹配
+        query = query.where(Dish.category_id == category_id)
     if keyword:
         query = query.where(Dish.name.ilike(f"%{keyword}%"))
     if recommended:
@@ -80,6 +71,17 @@ async def list_dishes(
     result = await db.execute(query)
     dishes = result.scalars().all()
 
+    # 批量加载多分类
+    dish_ids = [d.id for d in dishes]
+    cat_rows = []
+    if dish_ids:
+        cat_rows = (await db.execute(
+            select(DishCategory).where(DishCategory.dish_id.in_(dish_ids))
+        )).scalars().all()
+    cat_map = {}
+    for row in cat_rows:
+        cat_map.setdefault(row.dish_id, []).append(row.category_id)
+
     items = []
     for d in dishes:
         items.append(DishList(
@@ -89,6 +91,7 @@ async def list_dishes(
             image_url=d.image_url,
             category_id=d.category_id,
             category_name=d.category.name if d.category else None,
+            category_ids=cat_map.get(d.id, []),
             status=d.status,
             is_recommended=d.is_recommended,
             sales_count=d.sales_count,

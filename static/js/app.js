@@ -342,7 +342,7 @@ async function loadDishes() {
 
 function renderDishList() {
   const list = document.getElementById('dish-list');
-  const filtered = activeCategory ? allDishes.filter(d => d.category_id === activeCategory) : allDishes;
+  const filtered = activeCategory ? allDishes.filter(d => d.category_id === activeCategory || (d.category_ids && d.category_ids.includes(activeCategory))) : allDishes;
 
   if (!filtered || filtered.length === 0) {
     list.innerHTML = '<div class="text-center text-secondary" style="padding:60px 0;font-size:14px">暂无菜品</div>';
