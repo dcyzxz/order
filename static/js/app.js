@@ -299,9 +299,7 @@ async function loadCategories() {
   try {
     const res = await menuApi.getCategories();
     allCategories = res.data || [];
-    if (allCategories.length > 0 && !activeCategory) {
-      activeCategory = allCategories[0].id;
-    }
+    activeCategory = null;  // 默认"全部"
     renderSidebar();
   } catch (e) { console.error(e); }
 }
