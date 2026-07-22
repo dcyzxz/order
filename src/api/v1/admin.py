@@ -16,6 +16,7 @@ from src.core.security import hash_password
 from src.models.category import Category
 from src.models.dish import Dish
 from src.models.material import Material, DishMaterial
+from src.models.pending_dish import PendingDish
 from src.models.order import Order
 from src.models.pending_dish import PendingDish
 from src.models.user import User
@@ -116,6 +117,23 @@ async def delete_user(
         raise NotFoundError(message="用户不存在")
     if user.id == admin.id:
         raise BusinessError(message="不能删除自己")
+
+    # 先删除关联的订单和待定价菜品
+    from src.models.order import Order
+    orders = await db.execute(select(Order).where(Order.user_id == user_id))
+    for o in orders.scalars().all():
+        await db.delete(o)
+
+    pendings = await db.execute(select(PendingDish).where(PendingDish.user_id == user_id))
+    for p in pendings.scalars().all():
+        await db.delete(p)
+
+    # 也把该用户作为审核人的记录清掉
+    admin_pendings = await db.execute(
+        select(PendingDish).where(PendingDish.admin_id == user_id)
+    )
+    for p in admin_pendings.scalars().all():
+        p.admin_id = None
 
     await db.delete(user)
     await db.flush()
