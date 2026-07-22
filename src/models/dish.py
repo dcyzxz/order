@@ -27,7 +27,7 @@ class Dish(TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(64), nullable=False, comment="菜品名称")
     description: Mapped[str | None] = mapped_column(Text, comment="菜品描述")
     price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="定价")
-    image_url: Mapped[str | None] = mapped_column(String(512), comment="图片URL")
+    image_url: Mapped[str | None] = mapped_column(Text, comment="图片URL(base64)")
     category_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("categories.id"), comment="分类ID")
     status: Mapped[str] = mapped_column(
         String(20),

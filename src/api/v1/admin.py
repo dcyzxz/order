@@ -31,7 +31,7 @@ from src.schemas.order import OrderOut
 from src.schemas.pending_dish import PendingDishCreate, PendingDishOut, PendingDishReview
 from src.schemas.user import UserCreate as UserCreateSchema, UserUpdate as UserUpdateSchema, UserOut
 from fastapi import UploadFile, File
-import httpx
+import base64
 
 router = APIRouter()
 
@@ -45,17 +45,13 @@ class BatchIds(BaseModel):
 UPLOAD_DIR = Path(__file__).parent.parent.parent.parent / "static" / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-# sm.ms free image hosting
-SM_MS_API = "https://sm.ms/api/v2/upload"
-SM_MS_TOKEN = ""  # Optional: get free token at https://sm.ms
-
 
 @router.post("/upload")
 async def upload_file(
     file: UploadFile = File(...),
     staff: User = Depends(get_staff_user),
 ):
-    """上传图片到云端存储（sm.ms 免费图床）. """
+    """上传图片（转为 base64 内嵌，不依赖外部存储）. """
     ext = os.path.splitext(file.filename or "image.jpg")[1].lower()
     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
         raise BusinessError(message="仅支持 jpg/png/gif/webp 格式")
@@ -64,27 +60,19 @@ async def upload_file(
     if len(content) > 5 * 1024 * 1024:
         raise BusinessError(message="文件大小不能超过 5MB")
 
-    # 上传到 sm.ms 图床
-    try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            headers = {"User-Agent": "OrderApp/1.0"}
-            if SM_MS_TOKEN:
-                headers["Authorization"] = f"Basic {SM_MS_TOKEN}"
-            files = {"smfile": (file.filename or "image.jpg", content, f"image/{ext[1:]}")}
-            resp = await client.post(SM_MS_API, files=files, headers=headers)
-            data = resp.json()
-            if data.get("code") == "success":
-                url = data["data"]["url"]
-                return success(data={"url": url}, message="上传成功")
-            # If image already exists, sm.ms returns the existing URL
-            if "image already exists" in str(data.get("msg", "")):
-                url = data["images"]
-                return success(data={"url": url}, message="上传成功")
-            raise BusinessError(message=f"图床上传失败: {data.get('msg', '未知错误')}")
-    except httpx.TimeoutException:
-        raise BusinessError(message="图床上传超时，请稍后重试")
-    except Exception as e:
-        raise BusinessError(message=f"上传失败: {str(e)}")
+    # 转为 base64 数据 URL
+    mime = f"image/{ext[1:]}"
+    if ext == ".jpg":
+        mime = "image/jpeg"
+    b64 = base64.b64encode(content).decode()
+    data_url = f"data:{mime};base64,{b64}"
+
+    # 同时也存一份到本地（某些场景备用）
+    filename = f"{uuid.uuid4().hex}{ext}"
+    with open(UPLOAD_DIR / filename, "wb") as f:
+        f.write(content)
+
+    return success(data={"url": data_url}, message="上传成功")
 
 
 # ==================== 用户管理 ====================

@@ -18,7 +18,7 @@ class PendingDish(TimestampMixin, Base):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, comment="提交用户ID")
     name: Mapped[str] = mapped_column(String(64), nullable=False, comment="菜品名称")
     description: Mapped[str | None] = mapped_column(Text, comment="菜品描述")
-    image_url: Mapped[str | None] = mapped_column(String(512), comment="参考图片URL")
+    image_url: Mapped[str | None] = mapped_column(Text, comment="参考图片URL")
     suggested_price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="建议价格")
     status: Mapped[str] = mapped_column(
         String(20),
