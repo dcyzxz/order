@@ -74,6 +74,7 @@
 
       <div class="admin-nav" style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto">
         <div class="category-tab active" data-tab="dishes" onclick="switchAdminTab('dishes')">菜品</div>
+        <div class="category-tab" data-tab="categories" onclick="switchAdminTab('categories')">分类</div>
         <div class="category-tab" data-tab="orders" onclick="switchAdminTab('orders')">订单</div>
         <div class="category-tab" data-tab="pending" onclick="switchAdminTab('pending')">审核</div>
         <div class="category-tab" data-tab="users" onclick="switchAdminTab('users')">用户</div>
@@ -95,6 +96,14 @@
 
       <div id="admin-tab-materials" class="admin-tab" style="display:none">
         <div id="admin-material-list"></div>
+      </div>
+
+      <div id="admin-tab-categories" class="admin-tab" style="display:none">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <input class="form-input" id="new-cat-name" placeholder="输入分类名称" style="flex:1">
+          <button class="btn btn-primary btn-small" onclick="adminAddCategory()">新增</button>
+        </div>
+        <div id="admin-category-list"></div>
       </div>
 
       <div id="admin-tab-users" class="admin-tab" style="display:none">

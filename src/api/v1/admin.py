@@ -281,6 +281,22 @@ async def update_category(
     return success(data=CategoryOut.model_validate(cat), message="分类更新成功")
 
 
+@router.delete("/categories/{category_id}")
+async def delete_category(
+    category_id: int,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """管理员删除分类."""
+    result = await db.execute(select(Category).where(Category.id == category_id))
+    cat = result.scalar_one_or_none()
+    if cat is None:
+        raise NotFoundError(message="分类不存在")
+    await db.delete(cat)
+    await db.flush()
+    return success(message="分类已删除")
+
+
 @router.get("/categories")
 async def admin_list_categories(
     admin: User = Depends(get_admin_user),

@@ -49,6 +49,7 @@ const adminApi = {
   getDishes: (params) => api('/admin/dishes?' + new URLSearchParams(params)),
   createCategory: (data) => api('/admin/categories', { method: 'POST', data }),
   updateCategory: (id, data) => api('/admin/categories/' + id, { method: 'PUT', data }),
+  deleteCategory: (id) => api('/admin/categories/' + id, { method: 'DELETE' }),
   getCategories: () => api('/admin/categories'),
   createMaterial: (data) => api('/admin/materials', { method: 'POST', data }),
   updateMaterial: (id, data) => api('/admin/materials/' + id, { method: 'PUT', data }),
@@ -226,7 +227,13 @@ async function loadCategories() {
 function renderSidebar() {
   const bar = document.getElementById('menu-sidebar');
   if (!bar) return;
-  bar.innerHTML = allCategories.map(c => `
+  bar.innerHTML = `
+    <div onclick="switchCategory(null)"
+      style="padding:14px 8px;text-align:center;font-size:13px;cursor:pointer;
+        ${activeCategory === null ? 'background:#fff;color:var(--green);font-weight:600;border-left:3px solid var(--green)' : 'color:#666;border-left:3px solid transparent'}">
+      全部
+    </div>
+  ` + allCategories.map(c => `
     <div onclick="switchCategory(${c.id})"
       style="padding:14px 8px;text-align:center;font-size:13px;cursor:pointer;
         ${activeCategory === c.id ? 'background:#fff;color:var(--green);font-weight:600;border-left:3px solid var(--green)' : 'color:#666;border-left:3px solid transparent'}">
@@ -239,7 +246,6 @@ function switchCategory(id) {
   activeCategory = id;
   renderSidebar();
   renderDishList();
-  // Scroll dishes to top
   const content = document.getElementById('menu-content');
   if (content) content.scrollTop = 0;
 }
@@ -555,7 +561,7 @@ async function initAdmin() {
 
   // Chef sees orders + dishes, admin sees all
   document.querySelectorAll('.admin-nav .category-tab').forEach(t => {
-    const adminOnly = ['users', 'pending', 'materials'];
+    const adminOnly = ['categories', 'users', 'pending', 'materials'];
     t.style.display = (window._isAdmin || (window._isChef && !adminOnly.includes(t.dataset.tab))) ? '' : 'none';
   });
 
@@ -867,6 +873,44 @@ async function loadAdminMaterials() {
   } catch (e) { console.error(e); }
 }
 
+// Admin Categories
+async function loadAdminCategories() {
+  try {
+    const res = await adminApi.getCategories();
+    const cats = res.data || [];
+    const el = document.getElementById('admin-category-list');
+    if (!el) return;
+    el.innerHTML = cats.map(c => `
+      <div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;margin-bottom:6px">
+        <span style="font-weight:500">${c.name}</span>
+        <button class="btn btn-small btn-outline" style="color:var(--red);border-color:var(--red);font-size:12px;padding:2px 10px" onclick="adminDeleteCategory(${c.id})">删除</button>
+      </div>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+async function adminAddCategory() {
+  const name = document.getElementById('new-cat-name').value.trim();
+  if (!name) { toast('请输入分类名称'); return; }
+  try {
+    await adminApi.createCategory({ name });
+    document.getElementById('new-cat-name').value = '';
+    toast('分类已创建');
+    loadAdminCategories();
+    loadCategories();
+  } catch (e) { toast('创建失败: ' + e.message); }
+}
+
+async function adminDeleteCategory(id) {
+  if (!confirm('确定要删除此分类吗？')) return;
+  try {
+    await adminApi.deleteCategory(id);
+    toast('分类已删除');
+    loadAdminCategories();
+    loadCategories();
+  } catch (e) { toast('删除失败'); }
+}
+
 async function adminDeleteUser(id) {
   if (!confirm('确定要删除此用户吗？')) return;
   try {
@@ -938,6 +982,7 @@ function switchAdminTab(tab) {
     t.classList.toggle('active', t.dataset.tab === tab);
   });
   if (tab === 'dishes') loadAdminDishes();
+  if (tab === 'categories') loadAdminCategories();
   if (tab === 'orders') loadAdminOrders();
   if (tab === 'pending') loadAdminPending();
   if (tab === 'users') loadAdminUsers();
