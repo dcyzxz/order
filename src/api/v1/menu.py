@@ -9,7 +9,7 @@ from src.api.response import success, paginated
 from src.core.database import get_db
 from src.core.exceptions import NotFoundError
 from src.models.category import Category
-from src.models.dish import Dish
+from src.models.dish import Dish, DishCategory
 from src.models.material import Material, DishMaterial
 from src.schemas.dish import DishOut, DishList
 from src.schemas.material import MaterialOut
@@ -102,6 +102,12 @@ async def get_dish_detail(
     if dish is None:
         raise NotFoundError(message="菜品不存在或已下架")
 
+    # 获取多分类
+    cat_result = await db.execute(
+        select(DishCategory).where(DishCategory.dish_id == dish_id)
+    )
+    cat_ids = [dc.category_id for dc in cat_result.scalars().all()]
+
     return success(data=DishOut(
         id=dish.id,
         name=dish.name,
@@ -110,6 +116,7 @@ async def get_dish_detail(
         image_url=dish.image_url,
         category_id=dish.category_id,
         category_name=dish.category.name if dish.category else None,
+        category_ids=cat_ids,
         status=dish.status,
         is_recommended=dish.is_recommended,
         sales_count=dish.sales_count,

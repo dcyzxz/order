@@ -18,7 +18,7 @@ from src.core.database import get_db
 from src.core.exceptions import BusinessError, NotFoundError
 from src.core.security import hash_password
 from src.models.category import Category
-from src.models.dish import Dish
+from src.models.dish import Dish, DishCategory
 from src.models.material import Material, DishMaterial
 from src.models.pending_dish import PendingDish
 from src.models.order import Order
@@ -239,11 +239,32 @@ async def create_dish(
     if dish_in.material_ids:
         for mid in dish_in.material_ids:
             db.add(DishMaterial(dish_id=dish.id, material_id=mid))
+    # 关联多分类
+    all_cats = list(set(dish_in.category_ids or []))
+    if dish_in.category_id and dish_in.category_id not in all_cats:
+        all_cats.append(dish_in.category_id)
+    for cid in all_cats:
+        db.add(DishCategory(dish_id=dish.id, category_id=cid))
     await db.flush()
 
     # 重新查询以加载关系
     await db.refresh(dish, ["materials", "category"])
-    return success(data=DishOut.model_validate(dish), message="菜品创建成功")
+    # 手动加载多分类
+    cat_ids = await _get_dish_category_ids(db, dish.id)
+    return success(data=_dish_out_with_cats(dish, cat_ids), message="菜品创建成功")
+
+
+async def _get_dish_category_ids(db: AsyncSession, dish_id: int) -> list[int]:
+    result = await db.execute(
+        select(DishCategory).where(DishCategory.dish_id == dish_id)
+    )
+    return [dc.category_id for dc in result.scalars().all()]
+
+
+def _dish_out_with_cats(dish: Dish, cat_ids: list[int]) -> dict:
+    d = DishOut.model_validate(dish).model_dump(mode="python")
+    d["category_ids"] = cat_ids
+    return d
 
 
 @router.put("/dishes/{dish_id}")
@@ -276,6 +297,19 @@ async def update_dish(
     if dish_in.is_recommended is not None:
         dish.is_recommended = dish_in.is_recommended
 
+    # 更新多分类
+    if dish_in.category_ids is not None:
+        old_cats = await db.execute(
+            select(DishCategory).where(DishCategory.dish_id == dish_id)
+        )
+        for dc in old_cats.scalars().all():
+            await db.delete(dc)
+        all_cats = list(set(dish_in.category_ids))
+        if dish_in.category_id and dish_in.category_id not in all_cats:
+            all_cats.append(dish_in.category_id)
+        for cid in all_cats:
+            db.add(DishCategory(dish_id=dish_id, category_id=cid))
+
     # 更新材料关联
     if dish_in.material_ids is not None:
         # 删除旧关联
@@ -290,7 +324,8 @@ async def update_dish(
 
     await db.flush()
     await db.refresh(dish, ["materials", "category"])
-    return success(data=DishOut.model_validate(dish), message="菜品更新成功")
+    cat_ids = await _get_dish_category_ids(db, dish_id)
+    return success(data=_dish_out_with_cats(dish, cat_ids), message="菜品更新成功")
 
 
 @router.delete("/dishes/{dish_id}")
@@ -321,7 +356,7 @@ async def admin_list_dishes(
     db: AsyncSession = Depends(get_db),
 ):
     """查看所有菜品（管理员/厨师）. """
-    query = select(Dish).options(selectinload(Dish.category))
+    query = select(Dish).options(selectinload(Dish.category), selectinload(Dish.materials))
 
     if status:
         query = query.where(Dish.status == status)

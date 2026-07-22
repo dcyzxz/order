@@ -749,14 +749,11 @@ function showAdminDishModal(id) {
       </div>
     </div>
     <div class="form-group">
-      <label>分类</label>
-      <div style="display:flex;gap:8px">
-        <select class="form-select" id="f-dish-cat" style="flex:1">
-          <option value="">无分类</option>
-          ${cats.map(c => `<option value="${c.id}" ${dish && dish.category_id === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
-        </select>
-        <button class="btn btn-small btn-primary" onclick="showAddCategoryInModal()" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;font-size:20px;padding:0">+</button>
+      <label>分类 <span style="font-size:12px;color:var(--text-secondary)">（可多选）</span></label>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="btn btn-small btn-primary" onclick="showAddCategoryInModal()" style="font-size:12px">+ 新增</button>
       </div>
+      <div id="dish-cat-checkboxes" style="max-height:160px;overflow-y:auto;border:1px solid #eee;border-radius:8px;padding:8px"></div>
     </div>
     <div class="form-group">
       <label>描述</label>
@@ -769,7 +766,9 @@ function showAdminDishModal(id) {
   `;
   window._editDishId = id || null;
   window._selectedMaterials = dish && dish.materials ? dish.materials.map(m => m.id) : [];
+  window._selectedCategories = dish && dish.category_ids ? [...dish.category_ids] : (dish && dish.category_id ? [dish.category_id] : []);
   loadDishMaterials();
+  renderCatCheckboxes();
   document.getElementById('dish-modal-title').textContent = id ? '编辑菜品' : '新增菜品';
   document.getElementById('dish-modal').classList.remove('hidden');
 }
@@ -829,13 +828,7 @@ async function showAddCategoryInModal() {
     // Refresh categories and re-show modal
     const catRes = await adminApi.getCategories();
     window._adminCategories = catRes.data || [];
-    const sel = document.getElementById('f-dish-cat');
-    if (sel) {
-      const cur = sel.value;
-      sel.innerHTML = '<option value="">无分类</option>' +
-        window._adminCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-      sel.value = cur;
-    }
+    renderCatCheckboxes();
   } catch (e) { toast('创建失败: ' + e.message); }
 }
 
@@ -867,6 +860,26 @@ async function loadDishMaterials(filter = '') {
   } catch (e) { console.error(e); }
 }
 
+function renderCatCheckboxes() {
+  const el = document.getElementById('dish-cat-checkboxes');
+  if (!el) return;
+  const cats = window._adminCategories || [];
+  const selected = window._selectedCategories || [];
+  el.innerHTML = cats.length === 0 ? '<div class="text-secondary" style="padding:8px;font-size:13px">暂无分类</div>'
+    : cats.map(c => `
+    <label style="display:flex;align-items:center;gap:6px;padding:5px 4px;font-size:14px;cursor:pointer;border-bottom:1px solid #f5f5f5">
+      <input type="checkbox" value="${c.id}" ${selected.includes(c.id) ? 'checked' : ''} onchange="toggleDishCat(${c.id}, this.checked)">
+      <span>${c.name}</span>
+    </label>
+  `).join('');
+}
+
+function toggleDishCat(id, checked) {
+  if (!window._selectedCategories) window._selectedCategories = [];
+  if (checked) { if (!window._selectedCategories.includes(id)) window._selectedCategories.push(id); }
+  else { window._selectedCategories = window._selectedCategories.filter(i => i !== id); }
+}
+
 function toggleDishMaterial(id, checked) {
   if (!window._selectedMaterials) window._selectedMaterials = [];
   if (checked) {
@@ -881,7 +894,8 @@ async function saveDish() {
     name: document.getElementById('f-dish-name').value,
     price: document.getElementById('f-dish-price').value ? Number(document.getElementById('f-dish-price').value) : null,
     image_url: document.getElementById('f-dish-image').value.trim() || null,
-    category_id: document.getElementById('f-dish-cat').value ? Number(document.getElementById('f-dish-cat').value) : null,
+    category_id: null,
+    category_ids: window._selectedCategories || [],
     description: document.getElementById('f-dish-desc').value || null,
     material_ids: window._selectedMaterials || [],
   };
