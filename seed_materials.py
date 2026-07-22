@@ -1,4 +1,4 @@
-"""初始化常见食材数据
+"""初始化常见分类 + 食材数据
 用法: 在 Railway Shell 执行 python seed_materials.py
 """
 import asyncio
@@ -11,7 +11,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from src.models.material import Material
+from src.models.category import Category
 from src.core.config import settings
+
+
+CATEGORIES = [
+    "热菜", "凉菜", "汤类", "主食", "小吃",
+    "烧烤", "火锅", "海鲜", "素菜", "甜品",
+    "饮品", "早餐", "煲仔", "蒸菜",
+]
 
 MATERIALS = [
     # ===== 肉类 =====
@@ -240,7 +248,20 @@ async def seed_materials():
     async_session = async_sessionmaker(engine, class_=AsyncSession)
 
     async with async_session() as db:
-        # Check existing materials count
+        # === 分类 ===
+        cat_result = await db.execute(select(Category))
+        existing_cats = {c.name for c in cat_result.scalars().all()}
+        cat_count = 0
+        for name in CATEGORIES:
+            if name in existing_cats:
+                continue
+            db.add(Category(name=name, sort_order=cat_count))
+            cat_count += 1
+            existing_cats.add(name)
+        if cat_count:
+            print(f"✅ 新增 {cat_count} 个菜品分类")
+
+        # === 材料 ===
         result = await db.execute(select(Material))
         existing = result.scalars().all()
         existing_names = {m.name for m in existing}
