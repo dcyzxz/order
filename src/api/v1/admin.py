@@ -371,8 +371,20 @@ async def admin_list_dishes(
     result = await db.execute(query)
     dishes = result.scalars().all()
 
+    # 批量加载多分类
+    dish_ids = [d.id for d in dishes]
+    cat_rows = []
+    if dish_ids:
+        cat_rows = (await db.execute(
+            select(DishCategory).where(DishCategory.dish_id.in_(dish_ids))
+        )).scalars().all()
+    cat_map = {}
+    for row in cat_rows:
+        cat_map.setdefault(row.dish_id, []).append(row.category_id)
+
     items = []
     for d in dishes:
+        cat_ids = cat_map.get(d.id, [])
         items.append(DishOut(
             id=d.id,
             name=d.name,
@@ -384,6 +396,7 @@ async def admin_list_dishes(
             status=d.status,
             is_recommended=d.is_recommended,
             sales_count=d.sales_count,
+            category_ids=cat_ids,
             materials=[MaterialOut.model_validate(m) for m in (d.materials or [])],
             created_at=d.created_at,
         ))

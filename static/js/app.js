@@ -894,8 +894,8 @@ async function saveDish() {
     name: document.getElementById('f-dish-name').value,
     price: document.getElementById('f-dish-price').value ? Number(document.getElementById('f-dish-price').value) : null,
     image_url: document.getElementById('f-dish-image').value.trim() || null,
-    category_id: null,
     category_ids: window._selectedCategories || [],
+    category_id: (window._selectedCategories && window._selectedCategories.length) ? window._selectedCategories[0] : null,
     description: document.getElementById('f-dish-desc').value || null,
     material_ids: window._selectedMaterials || [],
   };
