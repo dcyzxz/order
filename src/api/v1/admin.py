@@ -108,10 +108,10 @@ async def update_user(
 @router.post("/dishes")
 async def create_dish(
     dish_in: DishCreate,
-    admin: User = Depends(get_admin_user),
+    staff: User = Depends(get_staff_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """管理员创建菜品."""
+    """创建菜品（管理员/厨师）. """
     dish = Dish(
         name=dish_in.name,
         description=dish_in.description,
@@ -139,10 +139,10 @@ async def create_dish(
 async def update_dish(
     dish_id: int,
     dish_in: DishUpdate,
-    admin: User = Depends(get_admin_user),
+    staff: User = Depends(get_staff_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """管理员更新菜品."""
+    """更新菜品（管理员/厨师）. """
     result = await db.execute(
         select(Dish).where(Dish.id == dish_id).options(selectinload(Dish.materials))
     )
@@ -188,10 +188,10 @@ async def admin_list_dishes(
     category_id: int | None = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    admin: User = Depends(get_admin_user),
+    staff: User = Depends(get_staff_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """管理员查看所有菜品（含未上架）. """
+    """查看所有菜品（管理员/厨师）. """
     query = select(Dish).options(selectinload(Dish.category))
 
     if status:

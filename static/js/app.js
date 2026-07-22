@@ -543,11 +543,10 @@ async function initAdmin() {
   window._isAdmin = user && user.role === 'admin';
   window._isChef = user && user.role === 'chef';
 
-  // Chef only sees orders tab
+  // Chef sees orders + dishes, admin sees all
   document.querySelectorAll('.admin-nav .category-tab').forEach(t => {
-    if (t.dataset.tab === 'dishes' || t.dataset.tab === 'users' || t.dataset.tab === 'pending' || t.dataset.tab === 'materials') {
-      t.style.display = window._isAdmin ? '' : 'none';
-    }
+    const adminOnly = ['users', 'pending', 'materials'];
+    t.style.display = (window._isAdmin || (window._isChef && !adminOnly.includes(t.dataset.tab))) ? '' : 'none';
   });
 
   if (window._isChef) {
