@@ -36,6 +36,11 @@ const menuApi = {
   getMyPendingDishes: () => api('/menu/pending-dishes'),
 };
 
+const recommendApi = {
+  get: () => api('/recommend'),
+  random: () => api('/recommend/random'),
+};
+
 const orderApi = {
   createOrder: (data) => api('/orders', { method: 'POST', data }),
   getOrders: (params) => api('/orders?' + new URLSearchParams(params)),
@@ -1265,6 +1270,77 @@ function switchAdminTab(tab) {
   if (tab === 'pending') loadAdminPending();
   if (tab === 'users') loadAdminUsers();
   if (tab === 'materials') loadAdminMaterials();
+}
+
+// ==================== Recommend ====================
+const _greetings = ['今天想吃点什么？', '让我帮你选！', '看看今天的推荐吧 🎯', '不知道吃啥？交给我！', '又到饭点啦 🍚'];
+const _foodEmojis = ['🥩', '🥬', '🥘', '🍜', '🍛', '🥗', '🌮', '🍕', '🍣', '🥟'];
+
+async function loadRecommend() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    document.getElementById('recommend-loading').innerHTML = '<div style="padding:60px 0;color:var(--text-secondary)">请先登录获取个性化推荐 🤖</div>';
+    document.getElementById('recommend-content').style.display = 'none';
+    return;
+  }
+  document.getElementById('recommend-loading').style.display = '';
+  document.getElementById('recommend-content').style.display = 'none';
+
+  try {
+    const [recRes, allRes] = await Promise.all([
+      recommendApi.get(),
+      menuApi.getDishes({ page_size: 100, recommended: true }),
+    ]);
+
+    document.getElementById('recommend-loading').style.display = 'none';
+    document.getElementById('recommend-content').style.display = '';
+
+    const greeting = _greetings[Math.floor(Math.random() * _greetings.length)];
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    document.getElementById('recommend-greeting').textContent = (user.nickname || '朋友') + '，' + greeting;
+
+    let dishes = recRes.data?.dishes || [];
+    // If no personalized recs, show recommended dishes
+    if (dishes.length === 0 && allRes.data?.items) {
+      dishes = allRes.data.items.slice(0, 10);
+    }
+
+    renderRecommendDishes(dishes);
+  } catch (e) {
+    document.getElementById('recommend-loading').innerHTML = '<div style="padding:60px 0;color:var(--text-secondary)">加载失败，请稍后再试</div>';
+  }
+}
+
+function renderRecommendDishes(dishes) {
+  const el = document.getElementById('recommend-list');
+  if (!dishes || dishes.length === 0) {
+    el.innerHTML = '<div class="text-center text-secondary" style="padding:40px">暂无推荐菜品</div>';
+    return;
+  }
+  el.innerHTML = '<div style="font-weight:600;font-size:15px;margin-bottom:12px">🎯 为你推荐</div>' +
+    dishes.map(d => `
+    <div class="dish-card" onclick="showDishDetail(${d.id})" style="margin-bottom:10px">
+      <div class="dish-img" style="width:72px;height:72px;font-size:28px">${_foodEmojis[d.id % _foodEmojis.length]}</div>
+      <div class="dish-info">
+        <div class="dish-name" style="font-size:14px">${d.name}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${d.category_name || ''}</div>
+        <div class="dish-footer" style="margin-top:6px">
+          <div class="dish-price" style="font-size:16px">${d.price !== null ? '¥' + d.price : '待定价'}</div>
+        </div>
+      </div>
+      <button class="add-cart-btn" onclick="event.stopPropagation(); quickAdd(${d.id})" style="width:26px;height:26px;font-size:16px">+</button>
+    </div>
+  `).join('');
+}
+
+async function getRandomPick() {
+  try {
+    const res = await recommendApi.random();
+    const dishes = res.data?.dishes || [];
+    if (!dishes.length) { toast('暂无菜品'); return; }
+    renderRecommendDishes(dishes);
+    document.getElementById('recommend-greeting').textContent = '🎲 随机推荐，试试这些！';
+  } catch (e) { toast('获取失败'); }
 }
 
 // ==================== Init ====================

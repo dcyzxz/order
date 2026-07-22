@@ -16,6 +16,26 @@
     <button class="header-action" id="header-action" onclick="logout()" style="display:none">退出</button>
   </div>
 
+  <!-- ==================== Recommend Page ==================== -->
+  <div class="page" id="recommend-page">
+    <div class="container">
+      <div id="recommend-loading" style="text-align:center;padding:60px 0;color:var(--text-secondary)">🤖 智能推荐分析中...</div>
+      <div id="recommend-content" style="display:none">
+        <div class="card" style="text-align:center;background:linear-gradient(135deg,#f0f9eb,#e8f5e9);margin-bottom:16px">
+          <div style="font-size:40px;margin-bottom:8px">🤖</div>
+          <div style="font-size:18px;font-weight:600;color:var(--green)">智能推荐助手</div>
+          <div style="font-size:13px;color:#666;margin-top:4px" id="recommend-greeting"></div>
+        </div>
+
+        <div id="recommend-list"></div>
+
+        <button class="btn btn-outline btn-block mt-16" onclick="getRandomPick()" style="display:flex;align-items:center;justify-content:center;gap:8px">
+          <span>🎲</span> 随便吃点
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== Menu Page ==================== -->
   <div class="page active" id="menu-page">
     <div style="display:flex;height:calc(100vh - 100px);overflow:hidden">
@@ -173,6 +193,10 @@
     <div class="nav-item active" data-page="menu-page" onclick="showPage('menu-page')">
       <span class="nav-icon">🍽️</span>
       菜单
+    </div>
+    <div class="nav-item" data-page="recommend-page" onclick="showPage('recommend-page'); loadRecommend();">
+      <span class="nav-icon">🤖</span>
+      推荐
     </div>
     <div class="nav-item" data-page="cart-page" onclick="showPage('cart-page'); renderCart();">
       <span class="nav-icon">🛒</span>
