@@ -18,7 +18,7 @@ from src.core.database import get_db
 from src.core.exceptions import BusinessError, NotFoundError
 from src.core.security import hash_password
 from src.models.category import Category
-from src.models.dish import Dish, DishCategory
+from src.models.dish import Dish
 from src.models.material import Material, DishMaterial
 from src.models.pending_dish import PendingDish
 from src.models.order import Order
@@ -235,17 +235,10 @@ async def create_dish(
     if dish_in.material_ids:
         for mid in dish_in.material_ids:
             db.add(DishMaterial(dish_id=dish.id, material_id=mid))
-    # 关联多分类
-    all_cat_ids = list(set(dish_in.category_ids or []))
-    if dish_in.category_id and dish_in.category_id not in all_cat_ids:
-        all_cat_ids.append(dish_in.category_id)
-    if all_cat_ids:
-        for cid in all_cat_ids:
-            db.add(DishCategory(dish_id=dish.id, category_id=cid))
     await db.flush()
 
     # 重新查询以加载关系
-    await db.refresh(dish, ["materials", "category", "categories"])
+    await db.refresh(dish, ["materials", "category"])
     return success(data=DishOut.model_validate(dish), message="菜品创建成功")
 
 
@@ -278,19 +271,6 @@ async def update_dish(
         dish.status = dish_in.status
     if dish_in.is_recommended is not None:
         dish.is_recommended = dish_in.is_recommended
-
-    # 更新多分类关联
-    if dish_in.category_ids is not None:
-        old_cats = await db.execute(
-            select(DishCategory).where(DishCategory.dish_id == dish_id)
-        )
-        for dc in old_cats.scalars().all():
-            await db.delete(dc)
-        all_cats = list(set(dish_in.category_ids))
-        if dish_in.category_id and dish_in.category_id not in all_cats:
-            all_cats.append(dish_in.category_id)
-        for cid in all_cats:
-            db.add(DishCategory(dish_id=dish_id, category_id=cid))
 
     # 更新材料关联
     if dish_in.material_ids is not None:

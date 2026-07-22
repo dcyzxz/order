@@ -39,7 +39,6 @@ class Dish(TimestampMixin, Base):
 
     # Relationships
     category = relationship("Category", back_populates="dishes", lazy="selectin")
-    categories = relationship("Category", secondary="dish_categories", lazy="selectin", viewonly=True)
     materials = relationship("Material", secondary="dish_materials", back_populates="dishes", lazy="selectin")
     order_items = relationship("OrderItem", back_populates="dish", lazy="selectin")
 
