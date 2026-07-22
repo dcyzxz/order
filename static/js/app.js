@@ -647,6 +647,10 @@ async function initAdmin() {
     t.style.display = (window._isAdmin || (window._isChef && !adminOnly.includes(t.dataset.tab))) ? '' : 'none';
   });
 
+  // 厨师隐藏批量删除按钮
+  const batchBtn = document.getElementById('batch-delete-orders-btn');
+  if (batchBtn) batchBtn.style.display = window._isAdmin ? '' : 'none';
+
   if (window._isChef) {
     switchAdminTab('orders');
   } else {

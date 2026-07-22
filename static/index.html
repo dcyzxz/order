@@ -103,7 +103,7 @@
       <div id="admin-tab-orders" class="admin-tab" style="display:none">
         <div style="display:flex;gap:8px;margin-bottom:12px">
           <input class="form-input" id="order-search" placeholder="搜索订单号" style="flex:1" oninput="searchAdminOrders()">
-          <button class="btn btn-small btn-outline" style="color:var(--red)" onclick="batchDeleteSelectedOrders()">批量删除</button>
+          <button class="btn btn-small btn-outline" style="color:var(--red)" onclick="batchDeleteSelectedOrders()" id="batch-delete-orders-btn">批量删除</button>
         </div>
         <div id="admin-order-list"></div>
       </div>
