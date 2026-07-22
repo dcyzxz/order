@@ -668,6 +668,13 @@ async function toggleDishStatus(id, status) {
 
 function showAdminDishModal(id) {
   const dish = id ? adminDishes.find(d => d.id === id) : null;
+  // 确保分类已加载
+  if ((!window._adminCategories || !window._adminCategories.length) && window._isAdmin) {
+    adminApi.getCategories().then(res => {
+      window._adminCategories = res.data || [];
+      renderDishCatSelector();
+    }).catch(() => {});
+  }
   const cats = window._adminCategories || [];
   document.getElementById('dish-form').innerHTML = `
     <div class="form-group">
