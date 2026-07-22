@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -53,15 +53,17 @@ async def list_dishes(
     )
 
     if category_id:
-        query = query.where(
-            or_(
-                Dish.category_id == category_id,
-                select(DishCategory).where(
-                    DishCategory.dish_id == Dish.id,
-                    DishCategory.category_id == category_id
-                ).exists()
-            )
+        # 从 dish_categories 找出属于该分类的所有菜品ID
+        dc_result = await db.execute(
+            select(DishCategory.dish_id).where(DishCategory.category_id == category_id)
         )
+        dc_dish_ids = {row[0] for row in dc_result.all()}
+        if dc_dish_ids:
+            query = query.where(
+                (Dish.category_id == category_id) | Dish.id.in_(dc_dish_ids)
+            )
+        else:
+            query = query.where(Dish.category_id == category_id)
     if keyword:
         query = query.where(Dish.name.ilike(f"%{keyword}%"))
     if recommended:
