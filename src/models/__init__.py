@@ -1,6 +1,6 @@
 from src.models.user import User
 from src.models.category import Category
-from src.models.dish import Dish
+from src.models.dish import Dish, DishCategory
 from src.models.material import Material, DishMaterial
 from src.models.order import Order, OrderItem
 from src.models.pending_dish import PendingDish

@@ -14,7 +14,8 @@ class DishCreate(BaseModel):
     description: str | None = Field(None, description="菜品描述")
     price: Decimal | None = Field(None, ge=0, decimal_places=2, description="定价")
     image_url: str | None = Field(None, max_length=512, description="图片URL")
-    category_id: int | None = Field(None, description="分类ID")
+    category_id: int | None = Field(None, description="主分类ID")
+    category_ids: list[int] = Field(default_factory=list, description="关联分类ID列表")
     material_ids: list[int] = Field(default_factory=list, description="关联材料ID列表")
     is_recommended: bool = False
 
@@ -26,6 +27,7 @@ class DishUpdate(BaseModel):
     price: Decimal | None = Field(None, ge=0, decimal_places=2)
     image_url: str | None = None
     category_id: int | None = None
+    category_ids: list[int] | None = None
     status: str | None = Field(None, pattern=r"^(active|inactive|pending_price)$")
     material_ids: list[int] | None = None
     is_recommended: bool | None = None
@@ -40,6 +42,8 @@ class DishOut(BaseModel):
     image_url: str | None = None
     category_id: int | None = None
     category_name: str | None = None
+    category_ids: list[int] = []
+    category_names: list[str] = []
     status: str = "active"
     is_recommended: bool = False
     sales_count: int = 0

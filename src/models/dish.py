@@ -9,6 +9,15 @@ from src.core.database import Base
 from src.models.mixins import TimestampMixin
 
 
+class DishCategory(Base):
+    """菜品-分类 多对多关联表"""
+    __tablename__ = "dish_categories"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    dish_id: Mapped[int] = mapped_column(Integer, ForeignKey("dishes.id", ondelete="CASCADE"), comment="菜品ID")
+    category_id: Mapped[int] = mapped_column(Integer, ForeignKey("categories.id", ondelete="CASCADE"), comment="分类ID")
+
+
 class Dish(TimestampMixin, Base):
     """菜品模型"""
 
@@ -30,6 +39,7 @@ class Dish(TimestampMixin, Base):
 
     # Relationships
     category = relationship("Category", back_populates="dishes", lazy="selectin")
+    categories = relationship("Category", secondary="dish_categories", lazy="selectin", viewonly=True)
     materials = relationship("Material", secondary="dish_materials", back_populates="dishes", lazy="selectin")
     order_items = relationship("OrderItem", back_populates="dish", lazy="selectin")
 
